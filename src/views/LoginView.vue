@@ -88,6 +88,7 @@ const rememberMe = ref(false)
 const loading = ref(false)
 const error = ref('')
 const router = useRouter()
+const BACKEND_URL = window.GLOBAL_BACKEND_URL || 'http://localhost:3000'
 
 onMounted(() => {
   const savedUser = localStorage.getItem('remembered_user')
@@ -101,7 +102,7 @@ const handleLogin = async () => {
   error.value = ''
   loading.value = true
   try {
-    const res = await fetch('http://localhost:3000/api/admin/login', {
+    const res = await fetch(`${BACKEND_URL}/api/admin/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username: username.value, password: password.value }),

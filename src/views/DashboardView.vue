@@ -211,6 +211,7 @@ const expandedId = ref(null)
 const searchQuery = ref('')
 const currentPage = ref(1)
 const PAGE_SIZE = 10
+const BACKEND_URL = window.GLOBAL_BACKEND_URL || 'http://localhost:3000'
 
 const filteredGuests = computed(() => {
   if (!searchQuery.value.trim()) return guests.value
@@ -248,7 +249,7 @@ const inviteLink = (token) => `${window.location.origin}/${token}`
 const fetchGuests = async () => {
   tableLoading.value = true
   try {
-    const res = await fetch('http://localhost:3000/api/admin/guests', {
+    const res = await fetch(`${BACKEND_URL}/api/admin/guests`, {
       headers: authHeaders(),
     })
     if (res.status === 401 || res.status === 403) {
@@ -266,7 +267,7 @@ const addGuest = async () => {
   addError.value = ''
   addLoading.value = true
   try {
-    const res = await fetch('http://localhost:3000/api/admin/guests', {
+    const res = await fetch(`${BACKEND_URL}/api/admin/guests`, {
       method: 'POST',
       headers: authHeaders(),
       body: JSON.stringify({ name: newGuestName.value.trim() }),
@@ -294,7 +295,7 @@ const deleteGuest = async () => {
   const { id } = deleteTarget.value
   deleteTarget.value = null
   try {
-    const res = await fetch(`http://localhost:3000/api/admin/guests/${id}`, {
+    const res = await fetch(`${BACKEND_URL}/api/admin/guests/${id}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
     })
@@ -325,7 +326,7 @@ const toggleExpand = (id) => {
 const updateGuest = async (id) => {
   if (!editingName.value.trim()) return
   try {
-    const res = await fetch(`http://localhost:3000/api/admin/guests/${id}`, {
+    const res = await fetch(`${BACKEND_URL}/api/admin/guests/${id}`, {
       method: 'PATCH',
       headers: authHeaders(),
       body: JSON.stringify({ name: editingName.value.trim() }),
