@@ -7,9 +7,27 @@ import HomeView from '../views/HomeView.vue'
 const router = createRouter({
   history: createWebHistory(),
   routes: [
-    { path: '/', component: HomeView },
-    { path: '/:id?', component: InvitationView }, // Optional ID for testing preview
-    { path: '/admin', component: LoginView },
+    {
+      path: '/',
+      component: HomeView,
+      beforeEnter: () => {
+        return localStorage.getItem('token') ? '/admin/dashboard' : true
+      },
+    },
+    {
+      path: '/:id?',
+      component: InvitationView,
+      beforeEnter: () => {
+        return localStorage.getItem('token') ? '/admin/dashboard' : true
+      },
+    }, // Optional ID for testing preview
+    {
+      path: '/admin',
+      component: LoginView,
+      beforeEnter: () => {
+        return localStorage.getItem('token') ? '/admin/dashboard' : true
+      },
+    },
     {
       path: '/admin/dashboard',
       component: DashboardView,
