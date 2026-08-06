@@ -1,735 +1,402 @@
+<script setup>
+import { ref, watch } from 'vue'
+
+const isOpen = ref(false)
+const videoRef = ref(null)
+
+// Play only after the cover flip finishes (1.3 s), pause+reset on close
+watch(isOpen, (val) => {
+  if (val) {
+    setTimeout(() => videoRef.value?.play(), 1300)
+  } else {
+    if (videoRef.value) {
+      videoRef.value.pause()
+      videoRef.value.currentTime = 0
+    }
+  }
+})
+</script>
+
 <template>
-  <div class="invitation-container">
-    <!-- Ambient background glows -->
-    <div class="glow glow-1" aria-hidden="true"></div>
-    <div class="glow glow-2" aria-hidden="true"></div>
-    <div class="glow glow-3" aria-hidden="true"></div>
+  <div class="invitation-page">
+    <!-- Floating petals -->
+    <div class="petal petal-1"></div>
+    <div class="petal petal-2"></div>
+    <div class="petal petal-3"></div>
+    <div class="petal petal-4"></div>
+    <div class="petal petal-5"></div>
 
-    <!-- Loading spinner -->
-    <div v-if="loading" class="loading-wrap">
-      <div class="loading-ring"></div>
-    </div>
+    <div class="scene">
+      <div class="passport-wrap" :class="{ 'is-open': isOpen }">
+        <!-- Inner white pages (behind the cover, revealed on open) -->
+        <div class="page-inner">
+          <div class="inner-content">
+            <div class="inner-ornament">✦ ✦ ✦</div>
+            <h2 class="inner-heading">You're Cordially Invited</h2>
+            <p class="inner-sub">Keann &amp; Jenny · October 9, 2026</p>
 
-    <template v-else>
-      <!-- Guest greeting -->
-      <div v-if="guest" class="guest-intro">
-        <p class="guest-eyebrow">You are cordially invited</p>
-        <h1 class="guest-name">{{ guest.name }}</h1>
-      </div>
-
-      <!-- 3-D passport book -->
-      <div class="passport-scene">
-        <div class="passport-book" ref="book">
-          <!-- ① Front cover — flips open like a book page -->
-          <div class="page cover" ref="cover" @click="openPassport">
-            <div class="cover-shell">
-              <div class="cover-header">
-                <span class="cover-republic">REPUBLIC OF LOVE</span>
-                <span class="cover-crest">✦</span>
+            <!-- Image slots — replace src attributes to add photos -->
+            <div class="img-grid">
+              <div class="img-slot main-slot">
+                <video
+                  ref="videoRef"
+                  src="@/assets/kj-intro.mp4"
+                  class="main-video"
+                  muted
+                  playsinline
+                ></video>
               </div>
-
-              <div class="cover-body">
-                <h2 class="cover-title">Wedding PASSPORT</h2>
-                <div class="cover-emblem">K ✈ ♡ J</div>
-                <p class="cover-to">TO THE WEDDING OF</p>
-                <h3 class="cover-couple">Keann &amp; Jenny</h3>
-                <p class="cover-date">10.10.2026</p>
-              </div>
-
-              <div class="cover-footer">
-                <div class="cover-strip"></div>
+              <div class="img-row">
+                <div class="img-slot sm-slot">
+                  <span class="img-label">Photo</span>
+                </div>
+                <div class="img-slot sm-slot">
+                  <span class="img-label">Photo</span>
+                </div>
               </div>
             </div>
+
+            <div class="inner-ornament">✦ ✦ ✦</div>
           </div>
+        </div>
 
-          <!-- ② Inside page — revealed after the animation -->
-          <div class="page inside" ref="inside" @click.stop>
-            <!-- Header strip -->
-            <div class="inside-header">
-              <span>WEDDING TRAVEL DOCUMENT</span>
-              <span class="inside-doc-no">WTD · 10102026</span>
-            </div>
-
-            <!-- Photo + passport fields -->
-            <div class="inside-body">
-              <div class="photo-col">
-                <div class="photo-box"><span>K&amp;J</span></div>
-                <p class="photo-label">BRIDE &amp; GROOM</p>
-              </div>
-              <div class="fields-col">
-                <div class="pf">
-                  <span class="pf-label">PASSENGER</span>
-                  <span class="pf-value">{{ guest?.name || 'VALUED GUEST' }}</span>
-                </div>
-                <div class="pf">
-                  <span class="pf-label">DATE OF UNION</span>
-                  <span class="pf-value">10 OCT 2026</span>
-                </div>
-                <div class="pf">
-                  <span class="pf-label">DESTINATION</span>
-                  <span class="pf-value">FOREVER</span>
-                </div>
-                <div class="pf">
-                  <span class="pf-label">FLIGHT</span>
-                  <span class="pf-value">KJ – 2026</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Machine-readable zone -->
-            <div class="mrz">
-              <p>P&lt;LOVE&lt;KEANN&lt;&lt;AND&lt;JENNY&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;</p>
-              <p>10102026M9991231&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;</p>
-            </div>
-
-            <!-- RSVP tear-off section -->
-            <div class="rsvp-section">
-              <div
-                class="rsvp-stamp"
-                :class="{
-                  'stamp-pending': rsvpStatus === 'pending',
-                  'stamp-accepted': rsvpStatus === 'accepted',
-                  'stamp-declined': rsvpStatus === 'rejected',
-                }"
-              >
-                {{
-                  rsvpStatus === 'accepted'
-                    ? 'ADMITTED'
-                    : rsvpStatus === 'rejected'
-                      ? 'DECLINED'
-                      : 'RSVP'
-                }}
-              </div>
-
-              <div class="rsvp-body">
-                <h3 class="rsvp-question">Will you join our journey?</h3>
-                <p class="rsvp-sub">Your presence is the greatest gift</p>
-
-                <div v-if="rsvpStatus === 'pending'" class="rsvp-actions">
-                  <button class="btn btn-yes" @click="submitRSVP('accepted')">
-                    ✓ &nbsp;Accept
-                  </button>
-                  <button class="btn btn-no" @click="submitRSVP('rejected')">
-                    ✗ &nbsp;Decline
-                  </button>
-                </div>
-                <p v-else-if="rsvpStatus === 'accepted'" class="rsvp-response rsvp-yes">
-                  🥂 We can't wait to see you!
-                </p>
-                <p v-else class="rsvp-response rsvp-no">We'll miss you, but we understand.</p>
-              </div>
-            </div>
-          </div>
+        <!-- Front cover — flips open -->
+        <div class="page-cover">
+          <div class="book-spine"></div>
         </div>
       </div>
 
-      <!-- Pulsing tap hint, hidden once open -->
-      <p v-if="!isOpen" class="tap-hint">tap to open</p>
-    </template>
+      <!-- Open Me button -->
+      <Transition name="fade-btn">
+        <button v-if="!isOpen" class="open-btn" @click="isOpen = true">
+          ✦ &nbsp;Open Me&nbsp; ✦
+        </button>
+      </Transition>
+
+      <!-- Close button -->
+      <Transition name="fade-btn">
+        <button v-if="isOpen" class="close-btn" @click="isOpen = false">← Close</button>
+      </Transition>
+    </div>
   </div>
 </template>
 
-<script setup>
-import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
-import { createTimeline } from 'animejs'
-
-const route = useRoute()
-const globalRefs = inject('globalRefs')
-const loading = ref(true)
-const guest = ref(null)
-const rsvpStatus = ref('pending')
-const isOpen = ref(false)
-
-// Template refs for anime.js
-const book = ref(null)
-const cover = ref(null)
-const inside = ref(null)
-
-onMounted(async () => {
-  if (route.params.id) {
-    try {
-      const res = await fetch(`${globalRefs.BACKEND_URL}/api/guests/${route.params.id}`)
-      if (res.ok) {
-        guest.value = await res.json()
-        rsvpStatus.value = guest.value.status || 'pending'
-      }
-    } catch {
-      // Preview mode — no backend
-    }
-  }
-  loading.value = false
-})
-
-const openPassport = () => {
-  if (isOpen.value) return
-  isOpen.value = true
-
-  const tl = createTimeline({
-    defaults: { ease: 'inOutCubic' },
-  })
-
-  // 1. Lift the passport off the page
-  tl.add(book.value, {
-    translateY: -14,
-    scale: 1.05,
-    duration: 380,
-    ease: 'outBack',
-  })
-
-    // 1b. Tilt to 90° first — show the spine before opening
-    .add(book.value, {
-      rotateY: 90,
-      duration: 600,
-      ease: 'inOutCubic',
-    })
-
-    // 2. Front cover flips open — bottom-hinged, swings upward like an upside-down book
-    .add(cover.value, {
-      rotateX: -180,
-      duration: 1300,
-      ease: 'inOutCubic',
-    })
-
-    // Fade cover just before flip ends so it doesn't ghost during the spin
-    .add(
-      cover.value,
-      {
-        opacity: 0,
-        duration: 150,
-        ease: 'linear',
-      },
-      '-=250',
-    )
-
-    // 3. Horizontal spin of the now-open book
-    .add(book.value, {
-      rotateY: 360,
-      duration: 1100,
-      ease: 'inOutCubic',
-    })
-
-    // 4. Settle the book back to resting position
-    .add(
-      book.value,
-      {
-        translateY: 0,
-        scale: 1,
-        duration: 450,
-        ease: 'outBack',
-      },
-      '-=200',
-    )
-
-    // 5. Inside content fades + slides up into view
-    .add(
-      inside.value,
-      {
-        opacity: [0, 1],
-        translateY: [22, 0],
-        duration: 750,
-        ease: 'outExpo',
-      },
-      '-=350',
-    )
-}
-
-const submitRSVP = async (status) => {
-  if (!route.params.id) {
-    rsvpStatus.value = status
-    return
-  }
-  try {
-    const res = await fetch(`${globalRefs.BACKEND_URL}/api/guests/${route.params.id}/rsvp`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status }),
-    })
-    if (res.ok) rsvpStatus.value = status
-  } catch {
-    // silent
-  }
-}
-</script>
-
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap');
 
-/* ─── Page shell ─────────────────────────────────────────── */
-.invitation-container {
+.invitation-page {
   min-height: 100vh;
-  background: radial-gradient(ellipse at 18% 18%, #2d1870 0%, #0e0b20 50%, #180d3e 100%);
+  background: linear-gradient(160deg, #f3eaff 0%, #e8d5ff 30%, #d4b8f5 60%, #c4a0f0 100%);
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-family: 'Cormorant Garamond', Georgia, serif;
   position: relative;
   overflow: hidden;
-  padding: 2rem 1rem;
+  font-family: 'Cormorant Garamond', serif;
 }
 
-/* Ambient glow blobs */
-.glow {
+/* ── Petals ─────────────────────────────────────────── */
+.petal {
   position: absolute;
-  border-radius: 50%;
-  filter: blur(90px);
+  border-radius: 50% 0 50% 0;
+  opacity: 0.18;
+  animation: float linear infinite;
   pointer-events: none;
 }
-.glow-1 {
-  width: 520px;
-  height: 520px;
-  background: radial-gradient(circle, rgba(111, 71, 198, 0.65) 0%, transparent 70%);
-  top: -160px;
-  left: -160px;
+.petal-1 {
+  width: 18px;
+  height: 28px;
+  background: #9b59b6;
+  top: 10%;
+  left: 8%;
+  animation-duration: 9s;
+  animation-delay: 0s;
 }
-.glow-2 {
-  width: 360px;
-  height: 360px;
-  background: radial-gradient(circle, rgba(201, 162, 39, 0.22) 0%, transparent 70%);
-  bottom: -90px;
-  right: -90px;
+.petal-2 {
+  width: 12px;
+  height: 20px;
+  background: #b07fe0;
+  top: 25%;
+  left: 88%;
+  animation-duration: 12s;
+  animation-delay: 2s;
 }
-.glow-3 {
-  width: 220px;
-  height: 220px;
-  background: radial-gradient(circle, rgba(111, 71, 198, 0.28) 0%, transparent 70%);
-  top: 42%;
-  right: 6%;
+.petal-3 {
+  width: 22px;
+  height: 34px;
+  background: #7d3c98;
+  top: 60%;
+  left: 5%;
+  animation-duration: 10s;
+  animation-delay: 4s;
 }
-
-/* ─── Loading ────────────────────────────────────────────── */
-.loading-wrap {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.petal-4 {
+  width: 14px;
+  height: 24px;
+  background: #c39bd3;
+  top: 75%;
+  left: 80%;
+  animation-duration: 8s;
+  animation-delay: 1s;
 }
-.loading-ring {
-  width: 42px;
-  height: 42px;
-  border: 3px solid rgba(255, 215, 0, 0.12);
-  border-top-color: #ffd700;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-/* ─── Guest intro ────────────────────────────────────────── */
-.guest-intro {
-  text-align: center;
-  margin-bottom: 2rem;
-  animation: fadeDown 0.75s ease both;
-}
-.guest-eyebrow {
-  font-size: 0.68rem;
-  letter-spacing: 0.38em;
-  text-transform: uppercase;
-  color: rgba(255, 215, 0, 0.65);
-  margin: 0 0 0.45rem;
-}
-.guest-name {
-  font-size: 2.4rem;
-  font-weight: 300;
-  color: #fff;
-  margin: 0;
-  letter-spacing: 0.04em;
+.petal-5 {
+  width: 10px;
+  height: 16px;
+  background: #a569bd;
+  top: 45%;
+  left: 93%;
+  animation-duration: 14s;
+  animation-delay: 3s;
 }
 
-/* ─── 3-D scene ──────────────────────────────────────────── */
-.passport-scene {
-  perspective: 1600px;
-  animation: scaleIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s both;
+@keyframes float {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.18;
+  }
+  90% {
+    opacity: 0.18;
+  }
+  100% {
+    transform: translateY(100vh) rotate(360deg);
+    opacity: 0;
+  }
 }
 
-.passport-book {
-  width: min(340px, 90vw);
-  height: 490px;
-  position: relative;
-  transform-style: preserve-3d;
-}
-
-/* Shared page rules */
-.page {
-  position: absolute;
-  inset: 0;
-  border-radius: 10px;
-  overflow: hidden;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-}
-
-/* ─── COVER ──────────────────────────────────────────────── */
-.cover {
-  background: linear-gradient(155deg, #8a5de0 0%, #6f47c6 45%, #4a2e99 100%);
-  border: 2px solid #c9a227;
-  box-shadow:
-    0 0 0 1px rgba(201, 162, 39, 0.2),
-    0 24px 55px rgba(0, 0, 0, 0.65),
-    inset 0 0 60px rgba(0, 0, 0, 0.18);
-  cursor: pointer;
-  transform-origin: bottom center; /* bottom-hinged — opens upward like an upside-down book */
-  user-select: none;
-  z-index: 2;
-}
-
-.cover-shell {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  border: 1px solid rgba(201, 162, 39, 0.28);
-  margin: 10px;
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.cover-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.7rem 1rem;
-  border-bottom: 1px solid rgba(201, 162, 39, 0.2);
-}
-.cover-republic {
-  font-size: 0.44rem;
-  letter-spacing: 0.4em;
-  text-transform: uppercase;
-  color: rgba(255, 215, 0, 0.62);
-}
-.cover-crest {
-  font-size: 1.05rem;
-  color: #ffd700;
-  text-shadow: 0 0 14px rgba(255, 215, 0, 0.5);
-}
-
-.cover-body {
-  flex: 1;
+/* ── Scene ───────────────────────────────────────────── */
+.scene {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 1rem 1.25rem;
-  gap: 0.7rem;
-}
-
-.cover-title {
-  font-family: 'IM Fell English', Georgia, serif;
-  font-size: 1.55rem;
-  font-weight: 400;
-  color: #ffd700;
-  margin: 0;
-  letter-spacing: 0.06em;
-  text-shadow: 0 0 28px rgba(255, 215, 0, 0.25);
-  line-height: 1.2;
-}
-
-.cover-emblem {
-  font-size: 1.55rem;
-  color: rgba(255, 215, 0, 0.9);
-  letter-spacing: 0.2em;
-  animation: glide 3.5s ease-in-out infinite;
-}
-
-.cover-to {
-  font-size: 0.5rem;
-  letter-spacing: 0.48em;
-  text-transform: uppercase;
-  color: rgba(255, 215, 0, 0.58);
-  margin: 0;
-}
-
-.cover-couple {
-  font-family: 'Cormorant Garamond', Georgia, serif;
-  font-size: 1.8rem;
-  font-weight: 300;
-  font-style: italic;
-  color: #fff;
-  margin: 0;
-  letter-spacing: 0.03em;
-}
-
-.cover-date {
-  font-size: 0.8rem;
-  letter-spacing: 0.38em;
-  color: rgba(255, 215, 0, 0.75);
-  margin: 0;
-}
-
-.cover-footer {
-  padding: 0.6rem 1rem;
-}
-.cover-strip {
-  height: 3px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    #ffd700 30%,
-    rgba(255, 255, 255, 0.5) 50%,
-    #ffd700 70%,
-    transparent
-  );
-  border-radius: 2px;
-}
-
-/* ─── INSIDE PAGE ────────────────────────────────────────── */
-.inside {
-  background: #faf7f0;
-  color: #2a2020;
-  box-shadow: 0 24px 55px rgba(0, 0, 0, 0.65);
-  display: flex;
-  flex-direction: column;
-  opacity: 0; /* anime.js drives this to 1 */
+  gap: 2rem;
+  perspective: 2200px;
   z-index: 1;
 }
 
-.inside-header {
-  background: #6f47c6;
-  color: #ffd700;
-  padding: 0.5rem 1rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.44rem;
-  letter-spacing: 0.28em;
-  text-transform: uppercase;
-  flex-shrink: 0;
-}
-.inside-doc-no {
-  font-family: 'Courier New', monospace;
-  opacity: 0.72;
+/* ── Passport wrapper ────────────────────────────────── */
+.passport-wrap {
+  position: relative;
+  width: clamp(260px, 55vw, 380px);
+  height: clamp(360px, 75vw, 530px);
+  transform-style: preserve-3d;
+  /* Resting tilt — looks like a physical closed passport */
+  transform: rotateY(-10deg) rotateX(3deg);
+  transition: transform 0.9s ease;
+  filter: drop-shadow(-10px 16px 28px rgba(70, 10, 130, 0.4));
 }
 
-.inside-body {
-  display: flex;
-  gap: 0.8rem;
-  padding: 0.75rem 1rem;
-  background: #f5f0e8;
-  flex-shrink: 0;
+.passport-wrap.is-open {
+  transform: rotateY(0deg) rotateX(0deg);
+  filter: drop-shadow(0 8px 24px rgba(70, 10, 130, 0.2));
 }
 
-.photo-col {
+/* ── Inner white page ────────────────────────────────── */
+.page-inner {
+  position: absolute;
+  inset: 0;
+  background: #ffffff;
+  border-radius: 0 8px 8px 0;
+  border: 1px solid rgba(180, 130, 220, 0.25);
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 0.5s 0.75s;
+}
+
+.passport-wrap.is-open .page-inner {
+  opacity: 1;
+}
+
+/* ── Front cover ─────────────────────────────────────── */
+.page-cover {
+  position: absolute;
+  inset: 0;
+  border-radius: 4px 8px 8px 4px;
+  overflow: hidden;
+  transform-origin: left center;
+  transform-style: preserve-3d;
+  background-image: url('@/assets/cover.png');
+  /* Show the right panel of the landscape image as the cover */
+  background-size: 200% 100%;
+  background-position: right center;
+  background-repeat: no-repeat;
+  box-shadow: 4px 0 20px rgba(60, 10, 110, 0.25);
+  transition: transform 1.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+  z-index: 2;
+}
+
+.passport-wrap.is-open .page-cover {
+  transform: rotateY(-180deg);
+}
+
+/* Spine shadow on cover left edge */
+.book-spine {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 20px;
+  height: 100%;
+  background: linear-gradient(to right, rgba(50, 5, 90, 0.35), transparent);
+  pointer-events: none;
+}
+
+/* ── Inner page content ──────────────────────────────── */
+.inner-content {
+  padding: 1.8rem 1.4rem;
+  height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.3rem;
-  flex-shrink: 0;
+  gap: 0.9rem;
+  box-sizing: border-box;
 }
-.photo-box {
-  width: 72px;
-  height: 88px;
-  border: 2px solid #c5b07e;
-  background: #ede5d0;
-  border-radius: 3px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+
+.inner-ornament {
+  color: #9b6ec8;
+  letter-spacing: 0.6em;
+  font-size: 0.7rem;
 }
-.photo-box span {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #6b5530;
-  letter-spacing: 0.05em;
+
+.inner-heading {
+  font-family: 'Great Vibes', cursive;
+  font-size: clamp(1.5rem, 4.5vw, 2.2rem);
+  color: #5b2d8e;
+  margin: 0;
+  line-height: 1.1;
 }
-.photo-label {
-  font-size: 0.36rem;
-  letter-spacing: 0.15em;
-  color: #8b7355;
+
+.inner-sub {
+  font-size: 0.75rem;
+  color: #8a5ab8;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   margin: 0;
 }
 
-.fields-col {
+/* ── Image slots ─────────────────────────────────────── */
+.img-grid {
   flex: 1;
+  width: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  gap: 0.5rem;
+  gap: 0.6rem;
 }
-.pf-label {
+
+.img-slot {
+  background: rgba(180, 130, 220, 0.08);
+  border: 2px dashed rgba(155, 110, 200, 0.35);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.main-slot {
+  flex: 1;
+  overflow: hidden;
+}
+
+.main-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 6px;
   display: block;
-  font-size: 0.4rem;
+}
+
+.img-row {
+  display: flex;
+  gap: 0.6rem;
+  height: 72px;
+  flex-shrink: 0;
+}
+
+.sm-slot {
+  flex: 1;
+}
+
+.img-label {
+  font-size: 0.7rem;
+  color: #c39bd3;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* ── Buttons ─────────────────────────────────────────── */
+.open-btn {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 1.1rem;
   letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: #8b7355;
-  margin-bottom: 0.1rem;
-}
-.pf-value {
-  display: block;
-  font-size: 0.68rem;
-  font-weight: 600;
-  color: #4a2e99;
-}
-
-.mrz {
-  font-family: 'Courier New', monospace;
-  font-size: 0.36rem;
-  color: #b0a090;
-  line-height: 1.55;
-  padding: 0.4rem 1rem;
-  background: #f5f0e8;
-  border-top: 1px solid #e8dfc8;
-  flex-shrink: 0;
-  letter-spacing: 0.04em;
-}
-.mrz p {
-  margin: 0;
-}
-
-/* RSVP — dashed line mimics a boarding-pass tear-off */
-.rsvp-section {
-  flex: 1;
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding: 0.8rem 1rem;
-  border-top: 2px dashed #c5b07e;
-}
-
-.rsvp-stamp {
-  flex-shrink: 0;
-  width: 62px;
-  height: 62px;
-  border: 3px solid;
-  border-radius: 5px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.52rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-align: center;
-  transform: rotate(-8deg);
-  line-height: 1.2;
-}
-.stamp-pending {
-  border-color: #6f47c6;
-  color: #6f47c6;
-}
-.stamp-accepted {
-  border-color: #2e7d32;
-  color: #2e7d32;
-}
-.stamp-declined {
-  border-color: #b71c1c;
-  color: #b71c1c;
-}
-
-.rsvp-body {
-  flex: 1;
-}
-
-.rsvp-question {
-  font-size: 0.9rem;
-  font-weight: 400;
-  color: #3d2080;
-  margin: 0 0 0.2rem;
-  line-height: 1.35;
-}
-.rsvp-sub {
-  font-size: 0.48rem;
-  color: #8b7355;
-  letter-spacing: 0.05em;
-  margin: 0 0 0.75rem;
-}
-
-.rsvp-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
-.btn {
-  padding: 0.46rem 0.8rem;
-  border: none;
-  border-radius: 4px;
+  color: #5b2d8e;
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(155, 110, 200, 0.5);
+  border-radius: 50px;
+  padding: 0.75rem 2.4rem;
   cursor: pointer;
-  font-size: 0.6rem;
-  letter-spacing: 0.1em;
-  font-weight: 700;
-  font-family: inherit;
+  backdrop-filter: blur(8px);
+  transition: all 0.3s ease;
+  animation: pulse-glow 2.4s ease-in-out infinite;
+}
+
+.open-btn:hover {
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 6px 28px rgba(130, 60, 180, 0.35);
+  transform: translateY(-2px);
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 4px 16px rgba(130, 60, 180, 0.15);
+  }
+  50% {
+    box-shadow: 0 4px 32px rgba(130, 60, 180, 0.45);
+  }
+}
+
+.close-btn {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 0.95rem;
+  letter-spacing: 0.15em;
+  color: #8a5ab8;
+  background: transparent;
+  border: 1px solid rgba(155, 110, 200, 0.4);
+  border-radius: 50px;
+  padding: 0.5rem 1.6rem;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.close-btn:hover {
+  background: rgba(255, 255, 255, 0.5);
+  color: #5b2d8e;
+}
+
+/* ── Transitions ─────────────────────────────────────── */
+.fade-btn-enter-active,
+.fade-btn-leave-active {
   transition:
-    filter 0.15s,
-    transform 0.15s;
+    opacity 0.4s,
+    transform 0.4s;
 }
-.btn:hover {
-  filter: brightness(1.1);
-  transform: translateY(-1px);
-}
-.btn:active {
-  transform: translateY(0);
-}
-.btn-yes {
-  background: #6f47c6;
-  color: #ffd700;
-}
-.btn-no {
-  background: #e8dfc8;
-  color: #6b5530;
+.fade-btn-enter-from,
+.fade-btn-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
 }
 
-.rsvp-response {
-  font-size: 0.65rem;
-  margin: 0.25rem 0 0;
-  line-height: 1.5;
-}
-.rsvp-yes {
-  color: #2e7d32;
-}
-.rsvp-no {
-  color: #666;
-}
+/* ── Responsive ──────────────────────────────────────── */
+@media (max-width: 480px) {
+  .passport-wrap {
+    width: 82vw;
+    height: 108vw;
+  }
 
-/* ─── Tap hint ───────────────────────────────────────────── */
-.tap-hint {
-  margin-top: 1.5rem;
-  font-size: 0.56rem;
-  letter-spacing: 0.38em;
-  text-transform: uppercase;
-  color: rgba(255, 215, 0, 0.42);
-  animation: pulse 2.2s ease-in-out infinite;
-}
-
-/* ─── Keyframes ──────────────────────────────────────────── */
-@keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.85) translateY(18px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-@keyframes fadeDown {
-  from {
-    opacity: 0;
-    transform: translateY(-12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-@keyframes glide {
-  0%,
-  100% {
-    transform: translateX(0) translateY(0);
-  }
-  50% {
-    transform: translateX(5px) translateY(-3px);
-  }
-}
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 0.42;
-  }
-  50% {
-    opacity: 1;
+  .img-row {
+    height: 56px;
   }
 }
 </style>

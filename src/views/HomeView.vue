@@ -3,7 +3,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 
 // October 9, 2026 3:00 PM Manila time (UTC+8 = UTC+0 07:00)
 const weddingDate = new Date('2026-10-09')
-weddingDate.setHours(15, 0, 0, 0) // Set to 3:00 PM Manila time
+weddingDate.setHours(10, 0, 0, 0) // Set to 10:00 AM Manila time
 
 const timerState = ref('countdown') // 'countdown' | 'today' | 'married'
 const days = ref(0)
@@ -78,7 +78,7 @@ function pad(n) {
 
       <!-- Wedding date -->
       <p class="wedding-date">October 9, 2026</p>
-      <p class="wedding-time">3:00 PM · Cagayan de Oro City, Philippines</p>
+      <p class="wedding-time">10:00 AM · Cagayan de Oro City, Philippines</p>
 
       <!-- Bible verse -->
       <blockquote class="verse">
