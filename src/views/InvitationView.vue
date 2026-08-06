@@ -31,7 +31,6 @@ watch(isOpen, (val) => {
         <!-- Inner white pages (behind the cover, revealed on open) -->
         <div class="page-inner">
           <div class="inner-content">
-            <div class="inner-ornament">✦ ✦ ✦</div>
             <h2 class="inner-heading">You're Cordially Invited</h2>
             <p class="inner-sub">Keann &amp; Jenny · October 9, 2026</p>
 
@@ -48,15 +47,11 @@ watch(isOpen, (val) => {
               </div>
               <div class="img-row">
                 <div class="img-slot sm-slot">
-                  <span class="img-label">Photo</span>
-                </div>
-                <div class="img-slot sm-slot">
-                  <span class="img-label">Photo</span>
+                  <img src="@/assets/boarding-pass.png" class="sm-img" />
                 </div>
               </div>
             </div>
-
-            <div class="inner-ornament">✦ ✦ ✦</div>
+            <p class="mb-0 text-center">Click the Boarding Pass for more details.</p>
           </div>
         </div>
 
@@ -67,11 +62,11 @@ watch(isOpen, (val) => {
       </div>
 
       <!-- Open Me button -->
-      <Transition name="fade-btn">
-        <button v-if="!isOpen" class="open-btn" @click="isOpen = true">
-          ✦ &nbsp;Open Me&nbsp; ✦
-        </button>
-      </Transition>
+      <!-- <Transition name="fade-btn"> -->
+      <button v-if="!isOpen" class="open-btn" @click="isOpen = true">
+        ✦ &nbsp;Open Me&nbsp; ✦
+      </button>
+      <!-- </Transition> -->
 
       <!-- Close button -->
       <Transition name="fade-btn">
@@ -309,8 +304,16 @@ watch(isOpen, (val) => {
 .img-row {
   display: flex;
   gap: 0.6rem;
-  height: 72px;
+  height: 130px;
   flex-shrink: 0;
+
+  img {
+    width: 100%;
+    height: 100%;
+    /* object-fit: cover; */
+    border-radius: 6px;
+    display: block;
+  }
 }
 
 .sm-slot {
