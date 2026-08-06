@@ -135,6 +135,7 @@ import { useRoute } from 'vue-router'
 import { createTimeline } from 'animejs'
 
 const route = useRoute()
+const globalRefs = inject('globalRefs')
 const loading = ref(true)
 const guest = ref(null)
 const rsvpStatus = ref('pending')
@@ -144,12 +145,11 @@ const isOpen = ref(false)
 const book = ref(null)
 const cover = ref(null)
 const inside = ref(null)
-const BACKEND_URL = window.GLOBAL_BACKEND_URL || 'http://localhost:3000'
 
 onMounted(async () => {
   if (route.params.id) {
     try {
-      const res = await fetch(`${BACKEND_URL}/api/guests/${route.params.id}`)
+      const res = await fetch(`${globalRefs.BACKEND_URL}/api/guests/${route.params.id}`)
       if (res.ok) {
         guest.value = await res.json()
         rsvpStatus.value = guest.value.status || 'pending'
@@ -240,7 +240,7 @@ const submitRSVP = async (status) => {
     return
   }
   try {
-    const res = await fetch(`${BACKEND_URL}/api/guests/${route.params.id}/rsvp`, {
+    const res = await fetch(`${globalRefs.BACKEND_URL}/api/guests/${route.params.id}/rsvp`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status }),
