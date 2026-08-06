@@ -18,7 +18,7 @@ const router = createRouter({
       path: '/:id?',
       component: InvitationView,
       beforeEnter: () => {
-        return localStorage.getItem('token') ? '/admin/dashboard' : true
+        return true
       },
     }, // Optional ID for testing preview
     {

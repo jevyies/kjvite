@@ -124,7 +124,7 @@
                     <span v-else>Copy</span>
                   </button>
                 </td>
-                <td data-label="Status">
+                <td data-label="Status" :style="{ width: '120px' }">
                   <span class="badge" :class="`badge-${guest.status}`">{{ guest.status }}</span>
                 </td>
                 <td class="td-actions">
@@ -139,6 +139,7 @@
                   <template v-else>
                     <button class="action-btn edit-btn" @click="startEdit(guest)" title="Edit name">
                       ✎
+                      <!-- <span>Edit</span> -->
                     </button>
                     <button
                       class="action-btn delete-btn"
@@ -146,6 +147,7 @@
                       title="Remove guest"
                     >
                       🗑
+                      <!-- <span>Delete</span> -->
                     </button>
                   </template>
                 </td>
@@ -198,6 +200,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
+const globalRefs = inject('globalRefs')
 const guests = ref([])
 const newGuestName = ref('')
 const tableLoading = ref(true)
@@ -211,7 +214,6 @@ const expandedId = ref(null)
 const searchQuery = ref('')
 const currentPage = ref(1)
 const PAGE_SIZE = 10
-const BACKEND_URL = window.GLOBAL_BACKEND_URL || 'http://localhost:3000'
 
 const filteredGuests = computed(() => {
   if (!searchQuery.value.trim()) return guests.value
@@ -249,7 +251,7 @@ const inviteLink = (token) => `${window.location.origin}/${token}`
 const fetchGuests = async () => {
   tableLoading.value = true
   try {
-    const res = await fetch(`${BACKEND_URL}/api/admin/guests`, {
+    const res = await fetch(`${globalRefs.BACKEND_URL}/api/admin/guests`, {
       headers: authHeaders(),
     })
     if (res.status === 401 || res.status === 403) {
@@ -267,7 +269,7 @@ const addGuest = async () => {
   addError.value = ''
   addLoading.value = true
   try {
-    const res = await fetch(`${BACKEND_URL}/api/admin/guests`, {
+    const res = await fetch(`${globalRefs.BACKEND_URL}/api/admin/guests`, {
       method: 'POST',
       headers: authHeaders(),
       body: JSON.stringify({ name: newGuestName.value.trim() }),
@@ -275,7 +277,7 @@ const addGuest = async () => {
     if (res.ok) {
       newGuestName.value = ''
       currentPage.value = 1
-      await fetchGuests()
+      guests.value.unshift(await res.json())
     } else {
       addError.value = 'Failed to add guest. Please try again.'
     }
@@ -295,9 +297,9 @@ const deleteGuest = async () => {
   const { id } = deleteTarget.value
   deleteTarget.value = null
   try {
-    const res = await fetch(`${BACKEND_URL}/api/admin/guests/${id}`, {
+    const res = await fetch(`${globalRefs.BACKEND_URL}/api/admin/guests/${id}`, {
       method: 'DELETE',
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      headers: authHeaders(),
     })
     if (res.ok) {
       guests.value = guests.value.filter((g) => g.id !== id)
@@ -326,7 +328,7 @@ const toggleExpand = (id) => {
 const updateGuest = async (id) => {
   if (!editingName.value.trim()) return
   try {
-    const res = await fetch(`${BACKEND_URL}/api/admin/guests/${id}`, {
+    const res = await fetch(`${globalRefs.BACKEND_URL}/api/admin/guests/${id}`, {
       method: 'PATCH',
       headers: authHeaders(),
       body: JSON.stringify({ name: editingName.value.trim() }),
@@ -751,6 +753,7 @@ tbody tr:hover td {
 .td-actions {
   text-align: right;
   white-space: nowrap;
+  width: 100px;
 }
 .action-btn {
   width: 28px;
