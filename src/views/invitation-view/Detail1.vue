@@ -39,9 +39,6 @@
 }
 
 .detail-1 {
-  background:
-    radial-gradient(circle at top right, rgba(184, 122, 237, 0.17), transparent 35%),
-    linear-gradient(180deg, #fefbfd 0%, #f4ebfb 100%);
 }
 
 .panel {

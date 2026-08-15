@@ -1,96 +1,134 @@
 <template>
   <article class="detail-page detail-3">
-    <div class="panel">
-      <p class="eyebrow">Guest Guide</p>
-      <h2 class="title">Attire and Reminders</h2>
-
-      <div class="photo-box">
-        <img src="@/assets/details/detail3.png" alt="Wedding guest reminders" class="guide-image" />
+    <div class="pos-top">
+      <h1 class="text-head">ATTIRE</h1>
+      <h2 class="text-head">FORMAL OR SEMI FORMAL</h2>
+      <p>WE ENCOURAGE YOU TO DRESS IN THESE SHADES</p>
+      <div>
+        <img src="@/assets/details/clothes.png" alt="Attire" class="attire-image" />
+        <div class="color-palette">
+          <div class="lavender"></div>
+          <div class="lilac"></div>
+          <div class="pearlwhite"></div>
+          <div class="softsilver"></div>
+        </div>
       </div>
-
-      <div class="dress-code-box">
-        <p class="label">Suggested Attire</p>
-        <img src="@/assets/details/clothes.png" alt="Sample dress code" class="clothes-image" />
-      </div>
+      <p>STRICTLY, WHITE IS RESERVED FOR THE BRIDE</p>
+    </div>
+    <div class="pos-center">
+      <h1 class="text-head">NOTES TO GIFT</h1>
+      <p>
+        WITH ALL THAT WE HAVE, WE'VE BEEN TRULY BLESSED. YOUR PRESENCE AND PRAYERS ARE ALL THAT WE
+        REQUEST. BUT IF YOU DESIRE TO GIVE NONETHELESS, MONETARY GIFT IS ONE WE HUMBLY SUGGEST.
+      </p>
+    </div>
+    <div class="pos-bottom">
+      <h1 class="text-head text-dikit">CAN I BRING SOMEONE?</h1>
+      <p>
+        UNFORTUNATELY, DUE TO SPACE AND SEATING CONSTRAINTS, WE KINDLY ASK FOR YOUR UNDERSTANDING
+        THAT ONLY THE PEOPLE LISTED IN THE INVITATION WILL BE PRESENT, STRICTLY NO PLUS ONE, AS IT
+        ENSURES THAT EVERY GUEST HAS A COMFORTABLE AND ENJOYABLE EXPERIENCE
+      </p>
     </div>
   </article>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .detail-page {
-  width: 100%;
-  min-height: 100%;
+  height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem;
-  box-sizing: border-box;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 0.5rem;
+  font-family: 'Bell MT', serif;
+}
+.color-palette {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-block: 0.5rem;
+
+  div {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+
+    &.lavender {
+      background-color: #b7a2cd;
+    }
+    &.lilac {
+      background-color: #e2daeb;
+    }
+    &.pearlwhite {
+      background-color: #e8e5d8;
+    }
+    &.softsilver {
+      background-color: #bbb8b7;
+    }
+  }
 }
 
-.detail-3 {
-  background:
-    radial-gradient(circle at 12% 8%, rgba(147, 98, 212, 0.2), transparent 28%),
-    linear-gradient(180deg, #fffdfd 0%, #f3edfb 100%);
+h1,
+h2 {
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  line-height: 1.2;
+  color: #5c5c5c !important;
+}
+p {
+  letter-spacing: 0.1em;
+  font-size: clamp(0.3rem, 4vw, 0.8rem);
+  line-height: 1.4;
+  color: #5c5c5c !important;
+}
+h1 {
+  font-size: clamp(1.2rem, 6vw, 1.5rem);
+}
+h2 {
+  font-size: clamp(1rem, 5vw, 1.2rem);
 }
 
-.panel {
-  width: 100%;
-  border-radius: 20px;
-  border: 1px solid rgba(146, 96, 211, 0.22);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 14px 26px rgba(106, 66, 148, 0.15);
-  padding: 1rem;
-  box-sizing: border-box;
-}
-
-.eyebrow {
-  margin: 0;
+.text-head {
+  color: #50267d;
   text-align: center;
-  text-transform: uppercase;
-  letter-spacing: 0.17em;
-  font-size: 0.66rem;
-  color: #9161c0;
+  margin-bottom: 0.5rem;
 }
-
-.title {
-  margin: 0.3rem 0 0.7rem;
+.text-dikit {
+  letter-spacing: 0.05em;
+}
+p {
   text-align: center;
-  color: #51277f;
-  font-size: clamp(1.2rem, 5.8vw, 1.7rem);
+  color: #2f1b47;
 }
-
-.photo-box {
-  border-radius: 14px;
-  overflow: hidden;
-  border: 1px solid rgba(130, 74, 187, 0.2);
-}
-
-.guide-image {
+.attire-image {
   width: 100%;
+  max-width: 350px;
+  height: auto;
   display: block;
-  object-fit: cover;
+  margin: 0.2rem auto;
+}
+.pos-top,
+.pos-center,
+.pos-bottom {
+  width: min(900px, 95%);
+  padding: 1.2rem 1rem;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 8px 24px rgba(60, 26, 90, 0.18);
 }
 
-.dress-code-box {
-  margin-top: 0.75rem;
-  border-radius: 12px;
-  background: #fff;
-  border: 1px solid rgba(143, 99, 192, 0.2);
-  padding: 0.55rem;
-}
-
-.label {
-  margin: 0;
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.11em;
-  color: #8f63bc;
-}
-
-.clothes-image {
-  margin-top: 0.4rem;
-  width: 100%;
-  border-radius: 8px;
-  display: block;
+.pos-top .text-head,
+.pos-center .text-head,
+.pos-bottom .text-head,
+.pos-top p,
+.pos-center p,
+.pos-bottom p {
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.35);
 }
 </style>

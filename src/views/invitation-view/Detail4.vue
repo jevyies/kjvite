@@ -108,9 +108,9 @@ const openDownloadPage = () => {
 }
 
 .detail-4 {
-  background:
+  /* background:
     radial-gradient(circle at 80% 20%, rgba(162, 101, 219, 0.18), transparent 34%),
-    linear-gradient(180deg, #f8f2fc 0%, #ffffff 100%);
+    linear-gradient(180deg, #f8f2fc 0%, #ffffff 100%); */
 }
 
 .panel {
