@@ -45,8 +45,14 @@ watch(isOpen, (val) => {
                   playsinline
                 ></video>
               </div>
-              <div class="img-row">
-                <div class="img-slot sm-slot">
+              <div class="img-row justify-center">
+                <div
+                  :style="{
+                    boxShadow: 'rgba(0, 0, 0, 0.16) 0px 1px 4px',
+                    marginTop: '5px',
+                    borderRadius: '6px',
+                  }"
+                >
                   <img src="@/assets/boarding-pass.png" class="sm-img" />
                 </div>
               </div>
@@ -69,9 +75,9 @@ watch(isOpen, (val) => {
       <!-- </Transition> -->
 
       <!-- Close button -->
-      <Transition name="fade-btn">
-        <button v-if="isOpen" class="close-btn" @click="isOpen = false">← Close</button>
-      </Transition>
+      <!-- <Transition name="fade-btn"> -->
+      <button v-if="isOpen" class="close-btn" @click="isOpen = false">← Close</button>
+      <!-- </Transition> -->
     </div>
   </div>
 </template>
@@ -197,7 +203,7 @@ watch(isOpen, (val) => {
   border: 1px solid rgba(180, 130, 220, 0.25);
   overflow: hidden;
   opacity: 0;
-  transition: opacity 0.5s 0.75s;
+  transition: opacity 0.5s 0.4s;
 }
 
 .passport-wrap.is-open .page-inner {
@@ -304,13 +310,13 @@ watch(isOpen, (val) => {
 .img-row {
   display: flex;
   gap: 0.6rem;
-  height: 130px;
+  height: 126px;
   flex-shrink: 0;
 
   img {
     width: 100%;
     height: 100%;
-    /* object-fit: cover; */
+    object-fit: contain;
     border-radius: 6px;
     display: block;
   }
