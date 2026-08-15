@@ -3,6 +3,7 @@ import InvitationView from '../views/InvitationView.vue'
 import LoginView from '../views/LoginView.vue'
 import DashboardView from '../views/DashboardView.vue'
 import HomeView from '../views/HomeView.vue'
+import QRDownloadView from '../views/QRDownloadView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -12,6 +13,13 @@ const router = createRouter({
       component: HomeView,
       beforeEnter: () => {
         return localStorage.getItem('token') ? '/admin/dashboard' : true
+      },
+    },
+    {
+      path: '/qr-download/:id?',
+      component: QRDownloadView,
+      beforeEnter: () => {
+        return true
       },
     },
     {

@@ -1,8 +1,13 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import InvitationDetails from './invitation-view/InvitationDetails.vue'
 
 const isOpen = ref(false)
+const isDetailsOpen = ref(false)
 const videoRef = ref(null)
+const route = useRoute()
+const guestId = computed(() => (route.params.id ? String(route.params.id) : 'guest'))
 
 // Play only after the cover flip finishes (1.3 s), pause+reset on close
 watch(isOpen, (val) => {
@@ -46,15 +51,14 @@ watch(isOpen, (val) => {
                 ></video>
               </div>
               <div class="img-row justify-center">
-                <div
-                  :style="{
-                    boxShadow: 'rgba(0, 0, 0, 0.16) 0px 1px 4px',
-                    marginTop: '5px',
-                    borderRadius: '6px',
-                  }"
+                <button
+                  type="button"
+                  class="boarding-pass"
+                  @click="isDetailsOpen = true"
+                  aria-label="Open invitation details"
                 >
                   <img src="@/assets/boarding-pass.png" class="sm-img" />
-                </div>
+                </button>
               </div>
             </div>
             <p class="mb-0 text-center">Click the Boarding Pass for more details.</p>
@@ -78,6 +82,8 @@ watch(isOpen, (val) => {
       <!-- <Transition name="fade-btn"> -->
       <button v-if="isOpen" class="close-btn" @click="isOpen = false">← Close</button>
       <!-- </Transition> -->
+
+      <InvitationDetails :open="isDetailsOpen" :guest-id="guestId" @close="isDetailsOpen = false" />
     </div>
   </div>
 </template>
@@ -310,7 +316,6 @@ watch(isOpen, (val) => {
 .img-row {
   display: flex;
   gap: 0.6rem;
-  height: 252px;
   flex-shrink: 0;
 
   img {
@@ -395,6 +400,48 @@ watch(isOpen, (val) => {
 .fade-btn-leave-to {
   opacity: 0;
   transform: translateY(10px);
+}
+.boarding-pass {
+  box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
+  margin-top: 5px;
+  border-radius: 6px;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.boarding-pass:hover {
+  transform: translateY(-1px) scale(1.01);
+}
+
+.boarding-pass:focus-visible {
+  outline: 2px solid rgba(91, 45, 142, 0.9);
+  outline-offset: 2px;
+}
+
+.passport-wrap.is-open .boarding-pass {
+  animation: tada 5s ease 2s infinite both;
+}
+
+@keyframes tada {
+  0% {
+    transform: scale3d(1, 1, 1);
+  }
+  4%,
+  8% {
+    transform: scale3d(0.985, 0.985, 0.985) rotate3d(0, 0, 1, -1deg);
+  }
+  12%,
+  16% {
+    transform: scale3d(1.02, 1.02, 1.02) rotate3d(0, 0, 1, 1deg);
+  }
+  20% {
+    transform: scale3d(1, 1, 1);
+  }
+  100% {
+    transform: scale3d(1, 1, 1);
+  }
 }
 
 /* ── Responsive ──────────────────────────────────────── */
