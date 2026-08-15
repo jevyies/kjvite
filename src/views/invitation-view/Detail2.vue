@@ -84,9 +84,9 @@
 }
 
 .detail-2 {
-  background:
+  /* background:
     radial-gradient(circle at 80% 15%, rgba(145, 97, 209, 0.18), transparent 30%),
-    linear-gradient(180deg, #f6f0fc 0%, #fff7fb 100%);
+    linear-gradient(180deg, #f6f0fc 0%, #fff7fb 100%); */
 }
 
 .panel {

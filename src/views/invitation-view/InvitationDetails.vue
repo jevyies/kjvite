@@ -63,7 +63,10 @@ const emit = defineEmits(['close'])
   width: 100vw;
   height: 100dvh;
   max-height: 100dvh;
-  background: linear-gradient(180deg, #fffefe 0%, #f8f4ff 100%);
+  background-image: url('../../assets/background.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   box-shadow: 0 16px 42px rgba(0, 0, 0, 0.35);
   overflow: hidden;
 }
