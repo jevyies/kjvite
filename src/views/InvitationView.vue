@@ -310,7 +310,7 @@ watch(isOpen, (val) => {
 .img-row {
   display: flex;
   gap: 0.6rem;
-  height: 126px;
+  height: 252px;
   flex-shrink: 0;
 
   img {
@@ -405,7 +405,7 @@ watch(isOpen, (val) => {
   }
 
   .img-row {
-    height: 56px;
+    height: 110px;
   }
 }
 </style>
