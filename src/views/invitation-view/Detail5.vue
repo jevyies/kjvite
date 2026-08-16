@@ -382,7 +382,7 @@ hr {
   position: absolute;
   top: max(14px, env(safe-area-inset-top));
   right: 14px;
-  z-index: 5;
+  z-index: 999;
   border: 0;
   border-radius: 999px;
   padding: 0.45rem 0.9rem;

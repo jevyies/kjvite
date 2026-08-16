@@ -167,3 +167,6 @@ a,
 .w-50 {
   width: 50%;
 }
+.text-black {
+  color: #000 !important;
+}
