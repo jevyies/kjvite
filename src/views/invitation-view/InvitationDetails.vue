@@ -3,6 +3,7 @@ import Detail1 from './Detail1.vue'
 import Detail2 from './Detail2.vue'
 import Detail3 from './Detail3.vue'
 import Detail4 from './Detail4.vue'
+import Detail5 from './Detail5.vue'
 
 defineProps({
   open: {
@@ -36,7 +37,10 @@ const emit = defineEmits(['close'])
               <Detail3 />
             </section>
             <section class="snap-page">
-              <Detail4 :guest-id="guestId" />
+              <Detail4 />
+            </section>
+            <section class="snap-page">
+              <Detail5 :guest-id="guestId" />
             </section>
           </div>
         </div>
