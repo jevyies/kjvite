@@ -13,7 +13,8 @@
         <h1 class="text-head text-dikit">CAN I BRING SOMEONE?</h1>
         <p class="paragraph">
           Unfortunately, due to space and seating constraints, we kindly ask for your understanding
-          that only the people listed in the invitation will be present, strictly no plus one, as it
+          that only the people listed in the invitation will be present,
+          <span class="font-weight-bold text-black">only one (1) seat reserved for you</span>, as it
           ensures that every guest has a comfortable and enjoyable experience
         </p>
       </div>
