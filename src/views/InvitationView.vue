@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import InvitationDetails from './invitation-view/InvitationDetails.vue'
 
@@ -8,6 +8,13 @@ const isDetailsOpen = ref(false)
 const videoRef = ref(null)
 const route = useRoute()
 const guestId = computed(() => (route.params.id ? String(route.params.id) : 'guest'))
+
+onMounted(() => {
+  if (videoRef.value) {
+    videoRef.value.preload = 'auto'
+    videoRef.value.load()
+  }
+})
 
 // Play only after the cover flip finishes (1.3 s), pause+reset on close
 watch(isOpen, (val) => {
@@ -46,6 +53,7 @@ watch(isOpen, (val) => {
                   ref="videoRef"
                   src="@/assets/kj-intro.mp4"
                   class="main-video"
+                  preload="auto"
                   muted
                   playsinline
                 ></video>
