@@ -22,9 +22,10 @@
       <div>
         <h1 class="text-head text-dikit">RSVP</h1>
         <p class="paragraph">
-          We kindly ask for the pleasure of your response by 2nd week of September. Your timely
-          reply will greatly assist us in making the necessary arrangements for our special day.
-          Looking forward to celebrating with you and creating beautiful memories together.
+          We kindly ask for the pleasure of your response by
+          <span class="font-weight-bold text-black">2nd week of September</span>. Your timely reply
+          will greatly assist us in making the necessary arrangements for our special day. Looking
+          forward to celebrating with you and creating beautiful memories together.
         </p>
       </div>
     </div>
