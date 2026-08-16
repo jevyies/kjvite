@@ -90,7 +90,7 @@ hr {
   font-size: clamp(3rem, 6vw, 2rem);
 }
 .w-wmap {
-  background-image: url('@/assets/wmap.png');
+  background-image: url('@/assets/details/worldmap.png');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;

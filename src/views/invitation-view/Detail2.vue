@@ -97,7 +97,7 @@
           <p class="text-center font-bell text-uppercase font-weight-bold text-primary">
             BRIDESMAIDS
           </p>
-          <p class="text-center">Jeannette Ababa</p>
+          <p class="text-center">Jeanette Ababa</p>
           <p class="text-center">Andreia Albacete</p>
           <p class="text-center">Jhena Malaluan</p>
         </div>
@@ -118,9 +118,8 @@
 .text-header {
   font-family: 'Great Vibes', cursive;
   font-size: clamp(2.7rem, 6vw, 2rem);
-  line-height: 1.2;
+  line-height: 0.8;
   color: #5b2d8e;
-  font-weight: 600;
 }
 .text-head {
   font-family: 'Bell MT', serif;
