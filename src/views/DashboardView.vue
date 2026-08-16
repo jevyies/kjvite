@@ -1,3 +1,264 @@
+<script setup>
+import { ref, computed, watch, onMounted, onBeforeUnmount, inject } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+const globalRefs = inject('globalRefs')
+const guests = ref([])
+const newGuestName = ref('')
+const tableLoading = ref(false)
+const addLoading = ref(false)
+const addError = ref('')
+const copiedId = ref(null)
+const deleteTarget = ref(null)
+const editingId = ref(null)
+const editingName = ref('')
+const expandedId = ref(null)
+const statusMenuId = ref(null)
+const searchQuery = ref('')
+const toastMessage = ref('')
+const statusMenuPosition = ref({ top: 0, left: 0 })
+const currentPage = ref(1)
+const PAGE_SIZE = 10
+let toastTimer = null
+
+const filteredGuests = computed(() => {
+  if (!searchQuery.value.trim()) return guests.value
+  const q = searchQuery.value.trim().toLowerCase()
+  return guests.value.filter((g) => g.name.toLowerCase().includes(q))
+})
+
+const totalPages = computed(() => Math.max(1, Math.ceil(filteredGuests.value.length / PAGE_SIZE)))
+
+const paginatedGuests = computed(() => {
+  const start = (currentPage.value - 1) * PAGE_SIZE
+  return filteredGuests.value.slice(start, start + PAGE_SIZE)
+})
+
+const paginationStart = computed(() => (currentPage.value - 1) * PAGE_SIZE + 1)
+const paginationEnd = computed(() =>
+  Math.min(currentPage.value * PAGE_SIZE, filteredGuests.value.length),
+)
+
+watch(searchQuery, () => {
+  currentPage.value = 1
+})
+
+const acceptedCount = computed(() => guests.value.filter((g) => g.status === 'accepted').length)
+const pendingCount = computed(() => guests.value.filter((g) => g.status === 'pending').length)
+const declinedCount = computed(() => guests.value.filter((g) => g.status === 'rejected').length)
+
+const authHeaders = () => ({
+  'Content-Type': 'application/json',
+  Authorization: `Bearer ${localStorage.getItem('token')}`,
+})
+
+const inviteLink = (token) => `${window.location.origin}/invite/${token}`
+
+const fetchGuests = async () => {
+  if (localStorage.getItem('guests')) {
+    guests.value = JSON.parse(localStorage.getItem('guests') || [])
+    return
+  }
+  await getGuests()
+}
+const getGuests = async () => {
+  tableLoading.value = true
+  try {
+    const res = await fetch(`${globalRefs.BACKEND_URL}/api/admin/guests`, {
+      headers: authHeaders(),
+    })
+    if (res.status === 401 || res.status === 403) {
+      router.push('/admin')
+      return
+    }
+    if (res.ok) {
+      guests.value = await res.json()
+      setLocalStorage()
+    }
+  } finally {
+    tableLoading.value = false
+  }
+}
+
+const addGuest = async () => {
+  if (!newGuestName.value.trim()) return
+  addError.value = ''
+  addLoading.value = true
+  try {
+    const res = await fetch(`${globalRefs.BACKEND_URL}/api/admin/guests`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ name: newGuestName.value.trim() }),
+    })
+    if (res.ok) {
+      newGuestName.value = ''
+      currentPage.value = 1
+      guests.value.unshift(await res.json())
+      setLocalStorage()
+    } else {
+      addError.value = 'Failed to add guest. Please try again.'
+    }
+  } catch {
+    addError.value = 'Could not reach the server.'
+  } finally {
+    addLoading.value = false
+  }
+}
+const setLocalStorage = () => {
+  localStorage.setItem('guests', JSON.stringify(guests.value))
+}
+const confirmDelete = (guest) => {
+  deleteTarget.value = guest
+}
+
+const deleteGuest = async () => {
+  if (!deleteTarget.value) return
+  const { id } = deleteTarget.value
+  deleteTarget.value = null
+  try {
+    const res = await fetch(`${globalRefs.BACKEND_URL}/api/admin/guests/${id}`, {
+      method: 'DELETE',
+      headers: authHeaders(),
+    })
+    if (res.ok) {
+      guests.value = guests.value.filter((g) => g.id !== id)
+      setLocalStorage()
+      if (currentPage.value > totalPages.value) currentPage.value = Math.max(1, totalPages.value)
+    }
+  } catch {
+    // silent
+  }
+}
+
+const startEdit = (guest) => {
+  editingId.value = guest.id
+  editingName.value = guest.name
+}
+
+const cancelEdit = () => {
+  editingId.value = null
+  editingName.value = ''
+}
+
+const toggleExpand = (id) => {
+  if (editingId.value === id) return
+  expandedId.value = expandedId.value === id ? null : id
+}
+
+const setStatusMenuPosition = (buttonEl) => {
+  if (!buttonEl) return
+  const rect = buttonEl.getBoundingClientRect()
+  const menuWidth = 170
+  const gap = 8
+  const viewportPadding = 12
+  const maxLeft = window.innerWidth - menuWidth - viewportPadding
+
+  statusMenuPosition.value = {
+    top: rect.bottom + gap,
+    left: Math.max(viewportPadding, Math.min(rect.right - menuWidth, maxLeft)),
+  }
+}
+
+const toggleStatusMenu = (guestId, event) => {
+  if (statusMenuId.value === guestId) {
+    closeStatusMenu()
+    return
+  }
+  setStatusMenuPosition(event?.currentTarget)
+  statusMenuId.value = guestId
+}
+
+const closeStatusMenu = () => {
+  statusMenuId.value = null
+}
+
+const showToast = (message) => {
+  toastMessage.value = message
+  if (toastTimer) clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => {
+    toastMessage.value = ''
+    toastTimer = null
+  }, 2200)
+}
+
+const updateGuest = async (id) => {
+  if (!editingName.value.trim()) return
+  try {
+    const res = await fetch(`${globalRefs.BACKEND_URL}/api/admin/guests/${id}`, {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: JSON.stringify({ name: editingName.value.trim() }),
+    })
+    if (res.ok) {
+      const guest = guests.value.find((g) => g.id === id)
+      if (guest) guest.name = editingName.value.trim()
+      cancelEdit()
+    }
+  } catch {
+    // silent
+  }
+}
+
+const setGuestStatus = async (id, status) => {
+  try {
+    const res = await fetch(`${globalRefs.BACKEND_URL}/api/guests/${id}/rsvp`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ status }),
+    })
+    if (res.ok) {
+      const guest = guests.value.find((g) => g.token === id)
+      if (guest) guest.status = status
+      setLocalStorage()
+      showToast('Status updated successfully.')
+    }
+  } catch {
+    // silent
+  } finally {
+    closeStatusMenu()
+  }
+}
+
+const copyLink = async (guestId, token) => {
+  try {
+    await navigator.clipboard.writeText(inviteLink(token))
+    copiedId.value = guestId
+    setTimeout(() => {
+      copiedId.value = null
+    }, 2000)
+  } catch {
+    prompt('Copy this invitation link:', inviteLink(token))
+  }
+}
+
+const logout = () => {
+  localStorage.removeItem('token')
+  router.push('/admin')
+}
+
+const handleDocumentClick = () => {
+  closeStatusMenu()
+}
+
+const handleViewportChange = () => {
+  closeStatusMenu()
+}
+
+onMounted(() => {
+  fetchGuests()
+  document.addEventListener('click', handleDocumentClick)
+  window.addEventListener('resize', handleViewportChange)
+  window.addEventListener('scroll', handleViewportChange, true)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleDocumentClick)
+  window.removeEventListener('resize', handleViewportChange)
+  window.removeEventListener('scroll', handleViewportChange, true)
+  if (toastTimer) clearTimeout(toastTimer)
+})
+</script>
 <template>
   <div class="dashboard-page">
     <!-- Background orbs -->
@@ -63,7 +324,12 @@
 
       <!-- Guest table -->
       <section class="panel">
-        <h2 class="section-title">Guests ({{ guests.length }})</h2>
+        <div class="d-flex justify-space-between align-center mb-1">
+          <h2 class="section-title mb-0">Guests ({{ guests.length }})</h2>
+          <button class="btn-outlined" @click="getGuests" :disabled="tableLoading">
+            <span>↻ Reload Guest List</span>
+          </button>
+        </div>
 
         <div v-if="!tableLoading && guests.length > 0" class="search-bar">
           <input
@@ -139,7 +405,6 @@
                   <template v-else>
                     <button class="action-btn edit-btn" @click="startEdit(guest)" title="Edit name">
                       ✎
-                      <!-- <span>Edit</span> -->
                     </button>
                     <button
                       class="action-btn delete-btn"
@@ -147,8 +412,16 @@
                       title="Remove guest"
                     >
                       🗑
-                      <!-- <span>Delete</span> -->
                     </button>
+                    <div class="status-menu-wrap" @click.stop>
+                      <button
+                        class="action-btn more-btn"
+                        @click.stop="toggleStatusMenu(guest.token, $event)"
+                        title="More actions"
+                      >
+                        •••
+                      </button>
+                    </div>
                   </template>
                 </td>
               </tr>
@@ -192,176 +465,32 @@
         </div>
       </div>
     </transition>
+
+    <transition name="fade-up-toast">
+      <div v-if="toastMessage" class="toast toast-success" role="status" aria-live="polite">
+        {{ toastMessage }}
+      </div>
+    </transition>
+
+    <teleport to="body">
+      <transition name="fade-up-toast">
+        <div
+          v-if="statusMenuId"
+          class="status-menu status-menu-popup"
+          :style="{ top: `${statusMenuPosition.top}px`, left: `${statusMenuPosition.left}px` }"
+          @click.stop
+        >
+          <button class="status-option" @click="setGuestStatus(statusMenuId, 'accepted')">
+            Mark as Accepted
+          </button>
+          <button class="status-option" @click="setGuestStatus(statusMenuId, 'rejected')">
+            Mark as Declined
+          </button>
+        </div>
+      </transition>
+    </teleport>
   </div>
 </template>
-
-<script setup>
-import { ref, computed, watch, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-
-const router = useRouter()
-const globalRefs = inject('globalRefs')
-const guests = ref([])
-const newGuestName = ref('')
-const tableLoading = ref(true)
-const addLoading = ref(false)
-const addError = ref('')
-const copiedId = ref(null)
-const deleteTarget = ref(null)
-const editingId = ref(null)
-const editingName = ref('')
-const expandedId = ref(null)
-const searchQuery = ref('')
-const currentPage = ref(1)
-const PAGE_SIZE = 10
-
-const filteredGuests = computed(() => {
-  if (!searchQuery.value.trim()) return guests.value
-  const q = searchQuery.value.trim().toLowerCase()
-  return guests.value.filter((g) => g.name.toLowerCase().includes(q))
-})
-
-const totalPages = computed(() => Math.max(1, Math.ceil(filteredGuests.value.length / PAGE_SIZE)))
-
-const paginatedGuests = computed(() => {
-  const start = (currentPage.value - 1) * PAGE_SIZE
-  return filteredGuests.value.slice(start, start + PAGE_SIZE)
-})
-
-const paginationStart = computed(() => (currentPage.value - 1) * PAGE_SIZE + 1)
-const paginationEnd = computed(() =>
-  Math.min(currentPage.value * PAGE_SIZE, filteredGuests.value.length),
-)
-
-watch(searchQuery, () => {
-  currentPage.value = 1
-})
-
-const acceptedCount = computed(() => guests.value.filter((g) => g.status === 'accepted').length)
-const pendingCount = computed(() => guests.value.filter((g) => g.status === 'pending').length)
-const declinedCount = computed(() => guests.value.filter((g) => g.status === 'rejected').length)
-
-const authHeaders = () => ({
-  'Content-Type': 'application/json',
-  Authorization: `Bearer ${localStorage.getItem('token')}`,
-})
-
-const inviteLink = (token) => `${window.location.origin}/invite/${token}`
-
-const fetchGuests = async () => {
-  tableLoading.value = true
-  try {
-    const res = await fetch(`${globalRefs.BACKEND_URL}/api/admin/guests`, {
-      headers: authHeaders(),
-    })
-    if (res.status === 401 || res.status === 403) {
-      router.push('/admin')
-      return
-    }
-    if (res.ok) guests.value = await res.json()
-  } finally {
-    tableLoading.value = false
-  }
-}
-
-const addGuest = async () => {
-  if (!newGuestName.value.trim()) return
-  addError.value = ''
-  addLoading.value = true
-  try {
-    const res = await fetch(`${globalRefs.BACKEND_URL}/api/admin/guests`, {
-      method: 'POST',
-      headers: authHeaders(),
-      body: JSON.stringify({ name: newGuestName.value.trim() }),
-    })
-    if (res.ok) {
-      newGuestName.value = ''
-      currentPage.value = 1
-      guests.value.unshift(await res.json())
-    } else {
-      addError.value = 'Failed to add guest. Please try again.'
-    }
-  } catch {
-    addError.value = 'Could not reach the server.'
-  } finally {
-    addLoading.value = false
-  }
-}
-
-const confirmDelete = (guest) => {
-  deleteTarget.value = guest
-}
-
-const deleteGuest = async () => {
-  if (!deleteTarget.value) return
-  const { id } = deleteTarget.value
-  deleteTarget.value = null
-  try {
-    const res = await fetch(`${globalRefs.BACKEND_URL}/api/admin/guests/${id}`, {
-      method: 'DELETE',
-      headers: authHeaders(),
-    })
-    if (res.ok) {
-      guests.value = guests.value.filter((g) => g.id !== id)
-      if (currentPage.value > totalPages.value) currentPage.value = Math.max(1, totalPages.value)
-    }
-  } catch {
-    // silent
-  }
-}
-
-const startEdit = (guest) => {
-  editingId.value = guest.id
-  editingName.value = guest.name
-}
-
-const cancelEdit = () => {
-  editingId.value = null
-  editingName.value = ''
-}
-
-const toggleExpand = (id) => {
-  if (editingId.value === id) return
-  expandedId.value = expandedId.value === id ? null : id
-}
-
-const updateGuest = async (id) => {
-  if (!editingName.value.trim()) return
-  try {
-    const res = await fetch(`${globalRefs.BACKEND_URL}/api/admin/guests/${id}`, {
-      method: 'PATCH',
-      headers: authHeaders(),
-      body: JSON.stringify({ name: editingName.value.trim() }),
-    })
-    if (res.ok) {
-      const guest = guests.value.find((g) => g.id === id)
-      if (guest) guest.name = editingName.value.trim()
-      cancelEdit()
-    }
-  } catch {
-    // silent
-  }
-}
-
-const copyLink = async (guestId, token) => {
-  try {
-    await navigator.clipboard.writeText(inviteLink(token))
-    copiedId.value = guestId
-    setTimeout(() => {
-      copiedId.value = null
-    }, 2000)
-  } catch {
-    prompt('Copy this invitation link:', inviteLink(token))
-  }
-}
-
-const logout = () => {
-  localStorage.removeItem('token')
-  router.push('/admin')
-}
-
-onMounted(fetchGuests)
-</script>
 
 <style scoped lang="scss">
 /* ── Page ──────────────────────────────────────────────── */
@@ -754,6 +883,7 @@ tbody tr:hover td {
   text-align: right;
   white-space: nowrap;
   width: 100px;
+  position: relative;
 }
 .action-btn {
   width: 28px;
@@ -806,6 +936,51 @@ tbody tr:hover td {
   background: rgba(248, 113, 113, 0.12);
   color: #f87171;
   border-color: rgba(248, 113, 113, 0.4);
+}
+
+.status-menu-wrap {
+  position: relative;
+  display: inline-block;
+}
+.more-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.08em;
+}
+.more-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+.status-menu {
+  position: absolute;
+  min-width: 170px;
+  background: #1a1530;
+  border: 1px solid rgba(111, 71, 198, 0.35);
+  border-radius: 8px;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+}
+.status-menu-popup {
+  position: fixed;
+  z-index: 140;
+}
+.status-option {
+  width: 100%;
+  text-align: left;
+  padding: 0.55rem 0.7rem;
+  background: transparent;
+  border: 0;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+.status-option:hover {
+  background: rgba(111, 71, 198, 0.2);
+  color: #fff;
 }
 
 /* Inline edit input */
@@ -938,6 +1113,25 @@ tbody tr:hover td {
 }
 .modal-confirm:hover {
   background: #b71c1c;
+}
+
+/* ── Toast ─────────────────────────────────────────────── */
+.toast {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 120;
+  padding: 0.65rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.35);
+}
+.toast-success {
+  background: rgba(46, 125, 50, 0.9);
+  border: 1px solid rgba(74, 222, 128, 0.55);
+  color: #ecfdf3;
 }
 
 /* ── Spinner ───────────────────────────────────────────── */
@@ -1078,5 +1272,17 @@ tbody tr:hover td {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+.fade-up-toast-enter-active,
+.fade-up-toast-leave-active {
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+.fade-up-toast-enter-from,
+.fade-up-toast-leave-to {
+  opacity: 0;
+  transform: translateY(8px);
 }
 </style>
