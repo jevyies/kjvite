@@ -4,6 +4,7 @@ import LoginView from '../views/LoginView.vue'
 import DashboardView from '../views/DashboardView.vue'
 import HomeView from '../views/HomeView.vue'
 import QRDownloadView from '../views/QRDownloadView.vue'
+import NotFound from '../views/NotFound.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -23,7 +24,7 @@ const router = createRouter({
       },
     },
     {
-      path: '/:id?',
+      path: '/invite/:id?',
       component: InvitationView,
       beforeEnter: () => {
         return true
@@ -42,6 +43,10 @@ const router = createRouter({
       beforeEnter: () => {
         return localStorage.getItem('token') ? true : '/admin'
       },
+    },
+    {
+      path: '/:pathMatch(.*)*',
+      component: NotFound,
     },
   ],
 })

@@ -246,7 +246,7 @@ const authHeaders = () => ({
   Authorization: `Bearer ${localStorage.getItem('token')}`,
 })
 
-const inviteLink = (token) => `${window.location.origin}/${token}`
+const inviteLink = (token) => `${window.location.origin}/invite/${token}`
 
 const fetchGuests = async () => {
   tableLoading.value = true
