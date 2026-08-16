@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount, inject } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -14,9 +14,13 @@ const deleteTarget = ref(null)
 const editingId = ref(null)
 const editingName = ref('')
 const expandedId = ref(null)
+const statusMenuId = ref(null)
 const searchQuery = ref('')
+const toastMessage = ref('')
+const statusMenuPosition = ref({ top: 0, left: 0 })
 const currentPage = ref(1)
 const PAGE_SIZE = 10
+let toastTimer = null
 
 const filteredGuests = computed(() => {
   if (!searchQuery.value.trim()) return guests.value
@@ -142,6 +146,42 @@ const toggleExpand = (id) => {
   expandedId.value = expandedId.value === id ? null : id
 }
 
+const setStatusMenuPosition = (buttonEl) => {
+  if (!buttonEl) return
+  const rect = buttonEl.getBoundingClientRect()
+  const menuWidth = 170
+  const gap = 8
+  const viewportPadding = 12
+  const maxLeft = window.innerWidth - menuWidth - viewportPadding
+
+  statusMenuPosition.value = {
+    top: rect.bottom + gap,
+    left: Math.max(viewportPadding, Math.min(rect.right - menuWidth, maxLeft)),
+  }
+}
+
+const toggleStatusMenu = (guestId, event) => {
+  if (statusMenuId.value === guestId) {
+    closeStatusMenu()
+    return
+  }
+  setStatusMenuPosition(event?.currentTarget)
+  statusMenuId.value = guestId
+}
+
+const closeStatusMenu = () => {
+  statusMenuId.value = null
+}
+
+const showToast = (message) => {
+  toastMessage.value = message
+  if (toastTimer) clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => {
+    toastMessage.value = ''
+    toastTimer = null
+  }, 2200)
+}
+
 const updateGuest = async (id) => {
   if (!editingName.value.trim()) return
   try {
@@ -157,6 +197,26 @@ const updateGuest = async (id) => {
     }
   } catch {
     // silent
+  }
+}
+
+const setGuestStatus = async (id, status) => {
+  try {
+    const res = await fetch(`${globalRefs.BACKEND_URL}/api/guests/${id}/rsvp`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ status }),
+    })
+    if (res.ok) {
+      const guest = guests.value.find((g) => g.token === id)
+      if (guest) guest.status = status
+      setLocalStorage()
+      showToast('Status updated successfully.')
+    }
+  } catch {
+    // silent
+  } finally {
+    closeStatusMenu()
   }
 }
 
@@ -177,7 +237,27 @@ const logout = () => {
   router.push('/admin')
 }
 
-onMounted(fetchGuests)
+const handleDocumentClick = () => {
+  closeStatusMenu()
+}
+
+const handleViewportChange = () => {
+  closeStatusMenu()
+}
+
+onMounted(() => {
+  fetchGuests()
+  document.addEventListener('click', handleDocumentClick)
+  window.addEventListener('resize', handleViewportChange)
+  window.addEventListener('scroll', handleViewportChange, true)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleDocumentClick)
+  window.removeEventListener('resize', handleViewportChange)
+  window.removeEventListener('scroll', handleViewportChange, true)
+  if (toastTimer) clearTimeout(toastTimer)
+})
 </script>
 <template>
   <div class="dashboard-page">
@@ -325,7 +405,6 @@ onMounted(fetchGuests)
                   <template v-else>
                     <button class="action-btn edit-btn" @click="startEdit(guest)" title="Edit name">
                       ✎
-                      <!-- <span>Edit</span> -->
                     </button>
                     <button
                       class="action-btn delete-btn"
@@ -333,8 +412,16 @@ onMounted(fetchGuests)
                       title="Remove guest"
                     >
                       🗑
-                      <!-- <span>Delete</span> -->
                     </button>
+                    <div class="status-menu-wrap" @click.stop>
+                      <button
+                        class="action-btn more-btn"
+                        @click.stop="toggleStatusMenu(guest.token, $event)"
+                        title="More actions"
+                      >
+                        ...
+                      </button>
+                    </div>
                   </template>
                 </td>
               </tr>
@@ -378,6 +465,30 @@ onMounted(fetchGuests)
         </div>
       </div>
     </transition>
+
+    <transition name="fade-up-toast">
+      <div v-if="toastMessage" class="toast toast-success" role="status" aria-live="polite">
+        {{ toastMessage }}
+      </div>
+    </transition>
+
+    <teleport to="body">
+      <transition name="fade-up-toast">
+        <div
+          v-if="statusMenuId"
+          class="status-menu status-menu-popup"
+          :style="{ top: `${statusMenuPosition.top}px`, left: `${statusMenuPosition.left}px` }"
+          @click.stop
+        >
+          <button class="status-option" @click="setGuestStatus(statusMenuId, 'accepted')">
+            Mark as Accepted
+          </button>
+          <button class="status-option" @click="setGuestStatus(statusMenuId, 'rejected')">
+            Mark as Declined
+          </button>
+        </div>
+      </transition>
+    </teleport>
   </div>
 </template>
 
@@ -772,6 +883,7 @@ tbody tr:hover td {
   text-align: right;
   white-space: nowrap;
   width: 100px;
+  position: relative;
 }
 .action-btn {
   width: 28px;
@@ -824,6 +936,51 @@ tbody tr:hover td {
   background: rgba(248, 113, 113, 0.12);
   color: #f87171;
   border-color: rgba(248, 113, 113, 0.4);
+}
+
+.status-menu-wrap {
+  position: relative;
+  display: inline-block;
+}
+.more-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.08em;
+}
+.more-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+.status-menu {
+  position: absolute;
+  min-width: 170px;
+  background: #1a1530;
+  border: 1px solid rgba(111, 71, 198, 0.35);
+  border-radius: 8px;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+}
+.status-menu-popup {
+  position: fixed;
+  z-index: 140;
+}
+.status-option {
+  width: 100%;
+  text-align: left;
+  padding: 0.55rem 0.7rem;
+  background: transparent;
+  border: 0;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+.status-option:hover {
+  background: rgba(111, 71, 198, 0.2);
+  color: #fff;
 }
 
 /* Inline edit input */
@@ -956,6 +1113,25 @@ tbody tr:hover td {
 }
 .modal-confirm:hover {
   background: #b71c1c;
+}
+
+/* ── Toast ─────────────────────────────────────────────── */
+.toast {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 120;
+  padding: 0.65rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.35);
+}
+.toast-success {
+  background: rgba(46, 125, 50, 0.9);
+  border: 1px solid rgba(74, 222, 128, 0.55);
+  color: #ecfdf3;
 }
 
 /* ── Spinner ───────────────────────────────────────────── */
@@ -1096,5 +1272,17 @@ tbody tr:hover td {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+.fade-up-toast-enter-active,
+.fade-up-toast-leave-active {
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+.fade-up-toast-enter-from,
+.fade-up-toast-leave-to {
+  opacity: 0;
+  transform: translateY(8px);
 }
 </style>
