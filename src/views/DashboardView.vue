@@ -1,3 +1,184 @@
+<script setup>
+import { ref, computed, watch, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+const globalRefs = inject('globalRefs')
+const guests = ref([])
+const newGuestName = ref('')
+const tableLoading = ref(false)
+const addLoading = ref(false)
+const addError = ref('')
+const copiedId = ref(null)
+const deleteTarget = ref(null)
+const editingId = ref(null)
+const editingName = ref('')
+const expandedId = ref(null)
+const searchQuery = ref('')
+const currentPage = ref(1)
+const PAGE_SIZE = 10
+
+const filteredGuests = computed(() => {
+  if (!searchQuery.value.trim()) return guests.value
+  const q = searchQuery.value.trim().toLowerCase()
+  return guests.value.filter((g) => g.name.toLowerCase().includes(q))
+})
+
+const totalPages = computed(() => Math.max(1, Math.ceil(filteredGuests.value.length / PAGE_SIZE)))
+
+const paginatedGuests = computed(() => {
+  const start = (currentPage.value - 1) * PAGE_SIZE
+  return filteredGuests.value.slice(start, start + PAGE_SIZE)
+})
+
+const paginationStart = computed(() => (currentPage.value - 1) * PAGE_SIZE + 1)
+const paginationEnd = computed(() =>
+  Math.min(currentPage.value * PAGE_SIZE, filteredGuests.value.length),
+)
+
+watch(searchQuery, () => {
+  currentPage.value = 1
+})
+
+const acceptedCount = computed(() => guests.value.filter((g) => g.status === 'accepted').length)
+const pendingCount = computed(() => guests.value.filter((g) => g.status === 'pending').length)
+const declinedCount = computed(() => guests.value.filter((g) => g.status === 'rejected').length)
+
+const authHeaders = () => ({
+  'Content-Type': 'application/json',
+  Authorization: `Bearer ${localStorage.getItem('token')}`,
+})
+
+const inviteLink = (token) => `${window.location.origin}/invite/${token}`
+
+const fetchGuests = async () => {
+  if (localStorage.getItem('guests')) {
+    guests.value = JSON.parse(localStorage.getItem('guests') || [])
+    return
+  }
+  await getGuests()
+}
+const getGuests = async () => {
+  tableLoading.value = true
+  try {
+    const res = await fetch(`${globalRefs.BACKEND_URL}/api/admin/guests`, {
+      headers: authHeaders(),
+    })
+    if (res.status === 401 || res.status === 403) {
+      router.push('/admin')
+      return
+    }
+    if (res.ok) {
+      guests.value = await res.json()
+      setLocalStorage()
+    }
+  } finally {
+    tableLoading.value = false
+  }
+}
+
+const addGuest = async () => {
+  if (!newGuestName.value.trim()) return
+  addError.value = ''
+  addLoading.value = true
+  try {
+    const res = await fetch(`${globalRefs.BACKEND_URL}/api/admin/guests`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ name: newGuestName.value.trim() }),
+    })
+    if (res.ok) {
+      newGuestName.value = ''
+      currentPage.value = 1
+      guests.value.unshift(await res.json())
+      setLocalStorage()
+    } else {
+      addError.value = 'Failed to add guest. Please try again.'
+    }
+  } catch {
+    addError.value = 'Could not reach the server.'
+  } finally {
+    addLoading.value = false
+  }
+}
+const setLocalStorage = () => {
+  localStorage.setItem('guests', JSON.stringify(guests.value))
+}
+const confirmDelete = (guest) => {
+  deleteTarget.value = guest
+}
+
+const deleteGuest = async () => {
+  if (!deleteTarget.value) return
+  const { id } = deleteTarget.value
+  deleteTarget.value = null
+  try {
+    const res = await fetch(`${globalRefs.BACKEND_URL}/api/admin/guests/${id}`, {
+      method: 'DELETE',
+      headers: authHeaders(),
+    })
+    if (res.ok) {
+      guests.value = guests.value.filter((g) => g.id !== id)
+      setLocalStorage()
+      if (currentPage.value > totalPages.value) currentPage.value = Math.max(1, totalPages.value)
+    }
+  } catch {
+    // silent
+  }
+}
+
+const startEdit = (guest) => {
+  editingId.value = guest.id
+  editingName.value = guest.name
+}
+
+const cancelEdit = () => {
+  editingId.value = null
+  editingName.value = ''
+}
+
+const toggleExpand = (id) => {
+  if (editingId.value === id) return
+  expandedId.value = expandedId.value === id ? null : id
+}
+
+const updateGuest = async (id) => {
+  if (!editingName.value.trim()) return
+  try {
+    const res = await fetch(`${globalRefs.BACKEND_URL}/api/admin/guests/${id}`, {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: JSON.stringify({ name: editingName.value.trim() }),
+    })
+    if (res.ok) {
+      const guest = guests.value.find((g) => g.id === id)
+      if (guest) guest.name = editingName.value.trim()
+      cancelEdit()
+    }
+  } catch {
+    // silent
+  }
+}
+
+const copyLink = async (guestId, token) => {
+  try {
+    await navigator.clipboard.writeText(inviteLink(token))
+    copiedId.value = guestId
+    setTimeout(() => {
+      copiedId.value = null
+    }, 2000)
+  } catch {
+    prompt('Copy this invitation link:', inviteLink(token))
+  }
+}
+
+const logout = () => {
+  localStorage.removeItem('token')
+  router.push('/admin')
+}
+
+onMounted(fetchGuests)
+</script>
 <template>
   <div class="dashboard-page">
     <!-- Background orbs -->
@@ -63,7 +244,12 @@
 
       <!-- Guest table -->
       <section class="panel">
-        <h2 class="section-title">Guests ({{ guests.length }})</h2>
+        <div class="d-flex justify-space-between align-center mb-1">
+          <h2 class="section-title mb-0">Guests ({{ guests.length }})</h2>
+          <button class="btn-outlined" @click="getGuests" :disabled="tableLoading">
+            <span>↻ Reload Guest List</span>
+          </button>
+        </div>
 
         <div v-if="!tableLoading && guests.length > 0" class="search-bar">
           <input
@@ -194,174 +380,6 @@
     </transition>
   </div>
 </template>
-
-<script setup>
-import { ref, computed, watch, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-
-const router = useRouter()
-const globalRefs = inject('globalRefs')
-const guests = ref([])
-const newGuestName = ref('')
-const tableLoading = ref(true)
-const addLoading = ref(false)
-const addError = ref('')
-const copiedId = ref(null)
-const deleteTarget = ref(null)
-const editingId = ref(null)
-const editingName = ref('')
-const expandedId = ref(null)
-const searchQuery = ref('')
-const currentPage = ref(1)
-const PAGE_SIZE = 10
-
-const filteredGuests = computed(() => {
-  if (!searchQuery.value.trim()) return guests.value
-  const q = searchQuery.value.trim().toLowerCase()
-  return guests.value.filter((g) => g.name.toLowerCase().includes(q))
-})
-
-const totalPages = computed(() => Math.max(1, Math.ceil(filteredGuests.value.length / PAGE_SIZE)))
-
-const paginatedGuests = computed(() => {
-  const start = (currentPage.value - 1) * PAGE_SIZE
-  return filteredGuests.value.slice(start, start + PAGE_SIZE)
-})
-
-const paginationStart = computed(() => (currentPage.value - 1) * PAGE_SIZE + 1)
-const paginationEnd = computed(() =>
-  Math.min(currentPage.value * PAGE_SIZE, filteredGuests.value.length),
-)
-
-watch(searchQuery, () => {
-  currentPage.value = 1
-})
-
-const acceptedCount = computed(() => guests.value.filter((g) => g.status === 'accepted').length)
-const pendingCount = computed(() => guests.value.filter((g) => g.status === 'pending').length)
-const declinedCount = computed(() => guests.value.filter((g) => g.status === 'rejected').length)
-
-const authHeaders = () => ({
-  'Content-Type': 'application/json',
-  Authorization: `Bearer ${localStorage.getItem('token')}`,
-})
-
-const inviteLink = (token) => `${window.location.origin}/invite/${token}`
-
-const fetchGuests = async () => {
-  tableLoading.value = true
-  try {
-    const res = await fetch(`${globalRefs.BACKEND_URL}/api/admin/guests`, {
-      headers: authHeaders(),
-    })
-    if (res.status === 401 || res.status === 403) {
-      router.push('/admin')
-      return
-    }
-    if (res.ok) guests.value = await res.json()
-  } finally {
-    tableLoading.value = false
-  }
-}
-
-const addGuest = async () => {
-  if (!newGuestName.value.trim()) return
-  addError.value = ''
-  addLoading.value = true
-  try {
-    const res = await fetch(`${globalRefs.BACKEND_URL}/api/admin/guests`, {
-      method: 'POST',
-      headers: authHeaders(),
-      body: JSON.stringify({ name: newGuestName.value.trim() }),
-    })
-    if (res.ok) {
-      newGuestName.value = ''
-      currentPage.value = 1
-      guests.value.unshift(await res.json())
-    } else {
-      addError.value = 'Failed to add guest. Please try again.'
-    }
-  } catch {
-    addError.value = 'Could not reach the server.'
-  } finally {
-    addLoading.value = false
-  }
-}
-
-const confirmDelete = (guest) => {
-  deleteTarget.value = guest
-}
-
-const deleteGuest = async () => {
-  if (!deleteTarget.value) return
-  const { id } = deleteTarget.value
-  deleteTarget.value = null
-  try {
-    const res = await fetch(`${globalRefs.BACKEND_URL}/api/admin/guests/${id}`, {
-      method: 'DELETE',
-      headers: authHeaders(),
-    })
-    if (res.ok) {
-      guests.value = guests.value.filter((g) => g.id !== id)
-      if (currentPage.value > totalPages.value) currentPage.value = Math.max(1, totalPages.value)
-    }
-  } catch {
-    // silent
-  }
-}
-
-const startEdit = (guest) => {
-  editingId.value = guest.id
-  editingName.value = guest.name
-}
-
-const cancelEdit = () => {
-  editingId.value = null
-  editingName.value = ''
-}
-
-const toggleExpand = (id) => {
-  if (editingId.value === id) return
-  expandedId.value = expandedId.value === id ? null : id
-}
-
-const updateGuest = async (id) => {
-  if (!editingName.value.trim()) return
-  try {
-    const res = await fetch(`${globalRefs.BACKEND_URL}/api/admin/guests/${id}`, {
-      method: 'PATCH',
-      headers: authHeaders(),
-      body: JSON.stringify({ name: editingName.value.trim() }),
-    })
-    if (res.ok) {
-      const guest = guests.value.find((g) => g.id === id)
-      if (guest) guest.name = editingName.value.trim()
-      cancelEdit()
-    }
-  } catch {
-    // silent
-  }
-}
-
-const copyLink = async (guestId, token) => {
-  try {
-    await navigator.clipboard.writeText(inviteLink(token))
-    copiedId.value = guestId
-    setTimeout(() => {
-      copiedId.value = null
-    }, 2000)
-  } catch {
-    prompt('Copy this invitation link:', inviteLink(token))
-  }
-}
-
-const logout = () => {
-  localStorage.removeItem('token')
-  router.push('/admin')
-}
-
-onMounted(fetchGuests)
-</script>
 
 <style scoped lang="scss">
 /* ── Page ──────────────────────────────────────────────── */
