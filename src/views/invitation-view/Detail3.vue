@@ -1,73 +1,69 @@
 <template>
   <article class="detail-page detail-3">
     <div class="pos-top card-frosty">
-      <h1 class="text-head">ATTIRE</h1>
-      <h2 class="text-head">FORMAL OR SEMI FORMAL</h2>
-      <p>WE ENCOURAGE YOU TO DRESS IN THESE SHADES</p>
+      <h1 class="text-head mb-1">ATTIRE</h1>
+      <h2 class="text-head mb-1">FORMAL OR SEMI FORMAL</h2>
+      <p :style="{ fontSize: '15px' }">WE ENCOURAGE YOU TO DRESS IN THESE SHADES</p>
       <div>
-        <img src="@/assets/details/clothes.png" alt="Attire" class="attire-image" />
-        <div class="color-palette">
-          <div class="lavender"></div>
-          <div class="lilac"></div>
-          <div class="pearlwhite"></div>
-          <div class="softsilver"></div>
+        <img src="@/assets/details/clothes.png" alt="Attire" class="attire-image mb-2" />
+        <div class="color-palette mb-2">
+          <div class="d-flex">
+            <div class="d-flex align-center gap-4 w-50">
+              <div class="colors lavender"></div>
+              <p class="mb-0">LAVENDER</p>
+            </div>
+            <div class="d-flex align-center gap-4 w-50">
+              <div class="colors lilac"></div>
+              <p class="mb-0">LILAC</p>
+            </div>
+          </div>
+          <div class="d-flex">
+            <div class="d-flex align-center gap-4 w-50">
+              <div class="colors pearlwhite"></div>
+              <p class="mb-0">PEARL WHITE</p>
+            </div>
+            <div class="d-flex align-center gap-4 w-50">
+              <div class="colors softsilver"></div>
+              <p class="mb-0">SOFT SILVER</p>
+            </div>
+          </div>
         </div>
       </div>
-      <p>STRICTLY, WHITE IS RESERVED FOR THE BRIDE</p>
-    </div>
-    <div class="pos-center card-frosty">
-      <h1 class="text-head">NOTES TO GIFT</h1>
-      <p>
-        WITH ALL THAT WE HAVE, WE'VE BEEN TRULY BLESSED. YOUR PRESENCE AND PRAYERS ARE ALL THAT WE
-        REQUEST. BUT IF YOU DESIRE TO GIVE NONETHELESS, MONETARY GIFT IS ONE WE HUMBLY SUGGEST.
-      </p>
-    </div>
-    <div class="pos-bottom card-frosty">
-      <h1 class="text-head text-dikit">CAN I BRING SOMEONE?</h1>
-      <p>
-        UNFORTUNATELY, DUE TO SPACE AND SEATING CONSTRAINTS, WE KINDLY ASK FOR YOUR UNDERSTANDING
-        THAT ONLY THE PEOPLE LISTED IN THE INVITATION WILL BE PRESENT, STRICTLY NO PLUS ONE, AS IT
-        ENSURES THAT EVERY GUEST HAS A COMFORTABLE AND ENJOYABLE EXPERIENCE
+      <p :style="{ fontSize: '15px' }">
+        STRICTLY, <span class="font-weight-bolds">WHITE</span> IS RESERVED FOR THE BRIDE
       </p>
     </div>
   </article>
 </template>
 
 <style scoped lang="scss">
-.detail-page {
-  height: 100dvh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  gap: 1rem;
-  padding: 0.5rem;
+.detail-3 {
   font-family: 'Bell MT', serif;
 }
 .color-palette {
   display: flex;
+  flex-direction: column;
   justify-content: center;
   gap: 0.5rem;
   margin-block: 0.5rem;
+}
+.colors {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid #fff;
 
-  div {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    border: 2px solid #fff;
-
-    &.lavender {
-      background-color: #b7a2cd;
-    }
-    &.lilac {
-      background-color: #e2daeb;
-    }
-    &.pearlwhite {
-      background-color: #e8e5d8;
-    }
-    &.softsilver {
-      background-color: #bbb8b7;
-    }
+  &.lavender {
+    background-color: #b7a2cd;
+  }
+  &.lilac {
+    background-color: #e2daeb;
+  }
+  &.pearlwhite {
+    background-color: #e8e5d8;
+  }
+  &.softsilver {
+    background-color: #bbb8b7;
   }
 }
 

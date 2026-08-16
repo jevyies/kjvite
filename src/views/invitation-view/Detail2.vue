@@ -1,23 +1,23 @@
 <template>
   <article class="detail-page detail-2">
     <div class="card-frosty">
-      <div :style="{ lineHeight: '1' }" class="mb-1">
+      <div :style="{ lineHeight: '1' }" class="marginBx">
         <p class="mb-0 text-center text-header">Andres - Cambari</p>
         <p class="text-center text-head">MARCHERS</p>
       </div>
-      <div class="mb-1">
+      <div class="marginBx">
         <p class="text-center font-bell text-uppercase font-weight-bold text-primary">
           Officiating Minister
         </p>
         <p class="text-center">Allan Andres</p>
       </div>
-      <div class="mb-1">
+      <div class="marginBx">
         <p class="text-center font-bell text-uppercase font-weight-bold text-primary">
           Director of the Feast
         </p>
         <p class="text-center">William Patilano II</p>
       </div>
-      <div class="d-flex justify-space-between mb-1">
+      <div class="d-flex justify-space-between marginBx">
         <div>
           <p class="text-center font-bell text-uppercase font-weight-bold text-primary">
             PARENTS (GROOM)
@@ -36,7 +36,7 @@
           </div>
         </div>
       </div>
-      <div class="d-flex justify-space-between mb-1">
+      <div class="d-flex justify-space-between marginBx">
         <div>
           <p class="text-center font-bell text-uppercase font-weight-bold text-primary">
             WITNESS (GROOM)
@@ -52,42 +52,42 @@
           <p class="text-center">Jocelyn Cabañas</p>
         </div>
       </div>
-      <div class="mb-1">
+      <div class="marginBx">
         <p class="text-center font-bell text-uppercase font-weight-bold text-primary">
           Bible Bearer
         </p>
         <p class="text-center">Troy Magollado</p>
       </div>
-      <div class="mb-1">
+      <div class="marginBx">
         <p class="text-center font-bell text-uppercase font-weight-bold text-primary">
           Ring Bearer
         </p>
         <p class="text-center">Ruie Amor</p>
       </div>
-      <div class="mb-1">
+      <div class="marginBx">
         <p class="text-center font-bell text-uppercase font-weight-bold text-primary">
           Songbook Bearer
         </p>
         <p class="text-center">Prancis June Pipino</p>
       </div>
-      <div class="d-flex justify-space-between mb-1">
+      <div class="d-flex justify-space-between marginBx">
         <div>
           <p class="text-center font-bell text-uppercase font-weight-bold text-primary">
-            FRIEND (GROOM)
+            GROOM'S ATTENDANT
           </p>
           <p class="text-center">Aldrin Andres</p>
         </div>
         <div>
           <p class="text-center font-bell text-uppercase font-weight-bold text-primary">
-            FRIEND (BRIDE)
+            BRIDE'S ATTENDANT
           </p>
           <p class="text-center">Mary Joy Lusuegro</p>
         </div>
       </div>
-      <div class="d-flex justify-space-between mb-1">
+      <div class="d-flex justify-space-between marginBx">
         <div>
           <p class="text-center font-bell text-uppercase font-weight-bold text-primary">
-            GROOMSMEN
+            GROOM'S FRIENDS
           </p>
           <p class="text-center">Jevy Ababa</p>
           <p class="text-center">Jake Allan Andres</p>
@@ -95,7 +95,7 @@
         </div>
         <div>
           <p class="text-center font-bell text-uppercase font-weight-bold text-primary">
-            BRIDESMAIDS
+            BRIDE'S FRIENDS
           </p>
           <p class="text-center">Jeanette Ababa</p>
           <p class="text-center">Andreia Albacete</p>
@@ -107,14 +107,6 @@
 </template>
 
 <style scoped>
-.detail-page {
-  width: 100%;
-  min-height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-}
 .text-header {
   font-family: 'Great Vibes', cursive;
   font-size: clamp(2.7rem, 6vw, 2rem);
@@ -128,5 +120,8 @@
   color: #505050;
   font-weight: 600;
   letter-spacing: 0.08em;
+}
+.marginBx {
+  margin-bottom: 10px;
 }
 </style>
