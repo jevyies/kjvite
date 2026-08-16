@@ -129,10 +129,6 @@ function pad(n) {
 </template>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap');
-.text-center {
-  text-align: center;
-}
 .home-page {
   min-height: 100vh;
   background: linear-gradient(160deg, #f3eaff 0%, #e8d5ff 30%, #d4b8f5 60%, #c4a0f0 100%);
@@ -242,15 +238,6 @@ function pad(n) {
   height: auto;
   margin-bottom: 1.2rem;
   filter: drop-shadow(0 2px 8px rgba(130, 60, 180, 0.2));
-}
-
-.couple-names {
-  font-family: 'Great Vibes', cursive;
-  font-size: clamp(3rem, 10vw, 5.5rem);
-  color: #5b2d8e;
-  margin: 0 0 0.3rem;
-  line-height: 1.1;
-  text-shadow: 0 2px 16px rgba(130, 60, 180, 0.2);
 }
 
 .tagline {

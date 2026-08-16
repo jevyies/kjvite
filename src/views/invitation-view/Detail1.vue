@@ -1,28 +1,53 @@
 <template>
   <article class="detail-page detail-1">
-    <div class="panel">
-      <p class="eyebrow">Wedding Day Invitation</p>
-      <h2 class="title">Keann and Jenny</h2>
-      <p class="lead">Together with our families, we invite you to celebrate our wedding day.</p>
-
-      <div class="info-grid">
-        <div class="info-card">
-          <p class="label">Date</p>
-          <p class="value">Friday, October 9, 2026</p>
-        </div>
-        <div class="info-card">
-          <p class="label">Time</p>
-          <p class="value">2:00 PM</p>
+    <div class="card-frosty">
+      <div class="mb-4 w-wmap">
+        <p class="mb-2 text-center text-sec font-bell">WE,</p>
+        <h1 class="couple-names text-center mb-2 more-fs">Keann &amp; Jenny</h1>
+        <p class="text-center text-sec font-bell">JOYOUSLY INVITE YOU TO WITNESS OUR WEDDING</p>
+      </div>
+      <div>
+        <p class="text-center mb-0 font-passport passport-headline">PASSPORT TO MARRIAGE</p>
+        <hr />
+        <div class="d-flex gap-2" :style="{ padding: '10px' }">
+          <div id="image" :style="{ width: '150px', padding: '5px 0' }">
+            <img src="@/assets/details/1.jpg" class="w-100 h-100" />
+          </div>
+          <div :style="{ width: 'calc(100% - 150px)' }" class="font-passport">
+            <div class="d-flex flex-column" :style="{ padding: '0 0 8px' }">
+              <div class="d-flex gap-1">
+                <p class="mb-0">TYPE:</p>
+                <p class="mb-0">WEDDING</p>
+              </div>
+              <div class="d-flex gap-1">
+                <p class="mb-0">CODE:</p>
+                <p class="mb-0">CITY</p>
+              </div>
+              <div class="d-flex gap-1">
+                <p class="mb-0">PASSPORT ID:</p>
+                <p class="mb-0">10092026</p>
+              </div>
+            </div>
+            <hr />
+            <div :style="{ marginBottom: '8px' }">
+              <p class="mb-0">NAME:</p>
+              <p class="mb-0">KEANN ANDRES & JENNY ANN CAMBARI</p>
+            </div>
+            <div :style="{ marginBottom: '8px' }">
+              <p class="mb-0">DATE:</p>
+              <p class="mb-0">09 OCTOBER 2026</p>
+            </div>
+            <div :style="{ marginBottom: '8px' }">
+              <p class="mb-0">TIME:</p>
+              <p class="mb-0">10:00 AM</p>
+            </div>
+            <div>
+              <p class="mb-0">LOCATION:</p>
+              <p class="mb-0">MARCO HOTEL, CDOC</p>
+            </div>
+          </div>
         </div>
       </div>
-
-      <div class="venue-card">
-        <p class="label">Venue</p>
-        <p class="value">Kingdom Hall of Jehovah's Witnesses</p>
-        <p class="sub">Digos City, Davao del Sur</p>
-      </div>
-
-      <p class="foot-note">Please scroll up for the full program and RSVP details.</p>
     </div>
   </article>
 </template>
@@ -34,92 +59,40 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1.2rem;
   box-sizing: border-box;
+  flex-direction: column;
 }
 
-.detail-1 {
+#image {
+  align-self: stretch;
 }
 
-.panel {
-  width: 100%;
-  border-radius: 20px;
-  border: 1px solid rgba(158, 91, 213, 0.22);
-  background: rgba(255, 255, 255, 0.84);
-  padding: 1.4rem 1.2rem;
-  box-shadow: 0 14px 26px rgba(122, 58, 176, 0.15);
+#image img {
+  object-fit: cover;
 }
-
-.eyebrow {
-  margin: 0;
+.passport-headline {
+  font-size: 18px;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  letter-spacing: 0.22em;
-  font-size: 0.66rem;
-  color: #8a5ab8;
-  text-align: center;
-}
-
-.title {
-  margin: 0.45rem 0 0;
-  text-align: center;
-  color: #51267f;
-  font-size: clamp(1.7rem, 7vw, 2.2rem);
-  line-height: 1.05;
-}
-
-.lead {
-  margin: 0.7rem 0 0;
-  color: #684691;
-  font-size: 0.95rem;
-  line-height: 1.45;
-  text-align: center;
-}
-
-.info-grid {
-  margin-top: 1rem;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.65rem;
-}
-
-.info-card,
-.venue-card {
-  border-radius: 12px;
-  border: 1px solid rgba(120, 61, 169, 0.18);
-  background: #ffffff;
-  padding: 0.75rem;
-}
-
-.venue-card {
-  margin-top: 0.65rem;
-}
-
-.label {
-  margin: 0;
-  font-size: 0.67rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: #a074c9;
-}
-
-.value {
-  margin: 0.35rem 0 0;
-  color: #4f296f;
-  font-size: 0.95rem;
+  color: #5b2d8e;
   font-weight: 600;
-  line-height: 1.3;
 }
-
-.sub {
-  margin: 0.22rem 0 0;
-  color: #7f5ca9;
-  font-size: 0.8rem;
+.text-sec {
+  color: #000;
+  font-size: 20px;
 }
-
-.foot-note {
-  margin: 0.95rem 0 0;
-  text-align: center;
-  color: #7f5ca9;
-  font-size: 0.8rem;
+hr {
+  border: 0;
+  height: 2px;
+  background: #5b2d8e;
+}
+.more-fs {
+  font-size: clamp(3rem, 6vw, 2rem);
+}
+.w-wmap {
+  background-image: url('@/assets/wmap.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 </style>

@@ -1,6 +1,6 @@
 <template>
   <article class="detail-page detail-3">
-    <div class="pos-top">
+    <div class="pos-top card-frosty">
       <h1 class="text-head">ATTIRE</h1>
       <h2 class="text-head">FORMAL OR SEMI FORMAL</h2>
       <p>WE ENCOURAGE YOU TO DRESS IN THESE SHADES</p>
@@ -15,14 +15,14 @@
       </div>
       <p>STRICTLY, WHITE IS RESERVED FOR THE BRIDE</p>
     </div>
-    <div class="pos-center">
+    <div class="pos-center card-frosty">
       <h1 class="text-head">NOTES TO GIFT</h1>
       <p>
         WITH ALL THAT WE HAVE, WE'VE BEEN TRULY BLESSED. YOUR PRESENCE AND PRAYERS ARE ALL THAT WE
         REQUEST. BUT IF YOU DESIRE TO GIVE NONETHELESS, MONETARY GIFT IS ONE WE HUMBLY SUGGEST.
       </p>
     </div>
-    <div class="pos-bottom">
+    <div class="pos-bottom card-frosty">
       <h1 class="text-head text-dikit">CAN I BRING SOMEONE?</h1>
       <p>
         UNFORTUNATELY, DUE TO SPACE AND SEATING CONSTRAINTS, WE KINDLY ASK FOR YOUR UNDERSTANDING
@@ -110,19 +110,6 @@ p {
   display: block;
   margin: 0.2rem auto;
 }
-.pos-top,
-.pos-center,
-.pos-bottom {
-  width: min(900px, 95%);
-  padding: 1.2rem 1rem;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.28);
-  border: 1px solid rgba(255, 255, 255, 0.45);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow: 0 8px 24px rgba(60, 26, 90, 0.18);
-}
-
 .pos-top .text-head,
 .pos-center .text-head,
 .pos-bottom .text-head,
