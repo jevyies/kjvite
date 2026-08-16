@@ -419,7 +419,7 @@ onBeforeUnmount(() => {
                         @click.stop="toggleStatusMenu(guest.token, $event)"
                         title="More actions"
                       >
-                        ...
+                        •••
                       </button>
                     </div>
                   </template>
