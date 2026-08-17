@@ -17,15 +17,20 @@ const expandedId = ref(null)
 const statusMenuId = ref(null)
 const searchQuery = ref('')
 const toastMessage = ref('')
+const selectedCard = ref('all')
 const statusMenuPosition = ref({ top: 0, left: 0 })
 const currentPage = ref(1)
 const PAGE_SIZE = 10
 let toastTimer = null
 
 const filteredGuests = computed(() => {
-  if (!searchQuery.value.trim()) return guests.value
+  let data = guests.value
+  if (selectedCard.value !== 'all') {
+    data = guests.value.filter((g) => g.status === selectedCard.value)
+  }
+  if (!searchQuery.value.trim()) return data
   const q = searchQuery.value.trim().toLowerCase()
-  return guests.value.filter((g) => g.name.toLowerCase().includes(q))
+  return data.filter((g) => g.name.toLowerCase().includes(q))
 })
 
 const totalPages = computed(() => Math.max(1, Math.ceil(filteredGuests.value.length / PAGE_SIZE)))
@@ -283,19 +288,35 @@ onBeforeUnmount(() => {
 
       <!-- Stats -->
       <div class="stats-row">
-        <div class="stat-card">
+        <div
+          class="stat-card"
+          :class="{ selected: selectedCard === 'all' }"
+          @click="selectedCard = 'all'"
+        >
           <span class="stat-value">{{ guests.length }}</span>
           <span class="stat-label">Total</span>
         </div>
-        <div class="stat-card stat-pending">
+        <div
+          class="stat-card stat-pending"
+          :class="{ selected: selectedCard === 'pending' }"
+          @click="selectedCard = 'pending'"
+        >
           <span class="stat-value">{{ pendingCount }}</span>
           <span class="stat-label">Pending</span>
         </div>
-        <div class="stat-card stat-accepted">
+        <div
+          class="stat-card stat-accepted"
+          :class="{ selected: selectedCard === 'accepted' }"
+          @click="selectedCard = 'accepted'"
+        >
           <span class="stat-value">{{ acceptedCount }}</span>
           <span class="stat-label">Accepted</span>
         </div>
-        <div class="stat-card stat-declined">
+        <div
+          class="stat-card stat-declined"
+          :class="{ selected: selectedCard === 'declined' }"
+          @click="selectedCard = 'declined'"
+        >
           <span class="stat-value">{{ declinedCount }}</span>
           <span class="stat-label">Declined</span>
         </div>
@@ -350,7 +371,8 @@ onBeforeUnmount(() => {
 
         <div v-else class="table-wrap">
           <div v-if="filteredGuests.length === 0" class="empty-state">
-            <p>No guests match “{{ searchQuery }}”.</p>
+            <p v-if="searchQuery.trim()">No guests match “{{ searchQuery }}”.</p>
+            <p v-else>No guests available.</p>
           </div>
           <table v-else>
             <thead>
@@ -618,6 +640,10 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
+  cursor: pointer;
+}
+.stat-card.selected {
+  border-width: 2px;
 }
 .stat-card.stat-accepted {
   border-color: rgba(46, 125, 50, 0.35);
