@@ -5,6 +5,7 @@ import DashboardView from '../views/DashboardView.vue'
 import HomeView from '../views/HomeView.vue'
 import QRDownloadView from '../views/QRDownloadView.vue'
 import NotFound from '../views/NotFound.vue'
+import ServerErrorView from '../views/ServerErrorView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -42,6 +43,13 @@ const router = createRouter({
       component: DashboardView,
       beforeEnter: () => {
         return localStorage.getItem('token') ? true : '/admin'
+      },
+    },
+    {
+      path: '/server-error',
+      component: ServerErrorView,
+      beforeEnter: () => {
+        return true
       },
     },
     {

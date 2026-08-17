@@ -1,25 +1,62 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import InvitationDetails from './invitation-view/InvitationDetails.vue'
 
 const isOpen = ref(false)
 const isDetailsOpen = ref(false)
+const globalRefs = inject('globalRefs')
 const videoRef = ref(null)
 const route = useRoute()
 const guestId = computed(() => (route.params.id ? String(route.params.id) : 'guest'))
-
-onMounted(() => {
+const loading = ref(false)
+const userResponse = ref('pending')
+const isDoneAnimating = ref(true)
+const authHeaders = () => ({
+  'Content-Type': 'application/json',
+  Authorization: `Bearer ${localStorage.getItem('token')}`,
+})
+onMounted(async () => {
+  loading.value = true
+  if (guestId.value === 'guest') {
+    location.href = '/server-error'
+    return
+  }
+  await getGuestResponse(guestId.value)
   if (videoRef.value) {
     videoRef.value.preload = 'auto'
     videoRef.value.load()
   }
+  loading.value = false
 })
-
+const getGuestResponse = async (id) => {
+  loading.value = true
+  try {
+    const res = await fetch(`${globalRefs.BACKEND_URL}/api/guests/${id}`, {
+      headers: authHeaders(),
+    })
+    if (res.status === 401 || res.status === 403 || res.status === 404) {
+      location.href = `/server-error?token=${guestId.value}`
+      return
+    }
+    if (res.ok) {
+      const data = await res.json()
+      userResponse.value = data.status || 'pending'
+    }
+  } finally {
+    loading.value = false
+  }
+}
 // Play only after the cover flip finishes (1.3 s), pause+reset on close
 watch(isOpen, (val) => {
   if (val) {
-    setTimeout(() => videoRef.value?.play(), 1300)
+    isDoneAnimating.value = false
+    setTimeout(() => {
+      videoRef.value?.play()
+    }, 1300)
+    setTimeout(() => {
+      isDoneAnimating.value = true
+    }, 10000)
   } else {
     if (videoRef.value) {
       videoRef.value.pause()
@@ -88,17 +125,23 @@ watch(isOpen, (val) => {
 
       <!-- Close button -->
       <!-- <Transition name="fade-btn"> -->
-      <button v-if="isOpen" class="close-btn" @click="isOpen = false">← Close</button>
+      <button v-if="isOpen" class="close-btn" @click="isOpen = false" :disabled="!isDoneAnimating">
+        ← Close
+      </button>
       <!-- </Transition> -->
 
-      <InvitationDetails :open="isDetailsOpen" :guest-id="guestId" @close="isDetailsOpen = false" />
+      <InvitationDetails
+        :open="isDetailsOpen"
+        :guest-id="guestId"
+        @close="isDetailsOpen = false"
+        :userResponse="userResponse"
+        @update-response="userResponse = $event"
+      />
     </div>
   </div>
 </template>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap');
-
 .invitation-page {
   min-height: 100vh;
   background: linear-gradient(160deg, #f3eaff 0%, #e8d5ff 30%, #d4b8f5 60%, #c4a0f0 100%);
@@ -395,6 +438,10 @@ watch(isOpen, (val) => {
 .close-btn:hover {
   background: rgba(255, 255, 255, 0.5);
   color: #5b2d8e;
+}
+.close-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* ── Transitions ─────────────────────────────────────── */
