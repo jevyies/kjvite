@@ -204,7 +204,6 @@ watch(
   async (newVal) => {
     qrDataUrl.value = ''
     response.value = newVal
-    console.log(response.value)
     if (newVal === 'accepted') {
       qrDataUrl.value = await QRCode.toDataURL(invitationUrl.value, {
         width: 150,
