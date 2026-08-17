@@ -323,8 +323,8 @@ onBeforeUnmount(() => {
         </div>
         <div
           class="stat-card stat-declined"
-          :class="{ selected: selectedCard === 'declined' }"
-          @click="selectedCard = 'declined'"
+          :class="{ selected: selectedCard === 'rejected' }"
+          @click="selectedCard = 'rejected'"
         >
           <span class="stat-value">{{ declinedCount }}</span>
           <span class="stat-label">Declined</span>
@@ -523,6 +523,9 @@ onBeforeUnmount(() => {
           :style="{ top: `${statusMenuPosition.top}px`, left: `${statusMenuPosition.left}px` }"
           @click.stop
         >
+          <button class="status-option" @click="setGuestStatus(statusMenuId, 'pending')">
+            Mark as Pending
+          </button>
           <button class="status-option" @click="setGuestStatus(statusMenuId, 'accepted')">
             Mark as Accepted
           </button>
