@@ -343,52 +343,54 @@ onBeforeUnmount(stopAutoPlay)
         </div>
       </div>
     </div>
-    <div v-if="showCarousel" class="carousel-modal">
-      <div class="slideshow-shell">
-        <button type="button" class="close-btn" aria-label="Close gallery" @click="closeCarousel">
-          ×
-        </button>
+    <Teleport to="body">
+      <div v-if="showCarousel" class="carousel-modal">
+        <div class="slideshow-shell">
+          <button type="button" class="close-btn" aria-label="Close gallery" @click="closeCarousel">
+            ×
+          </button>
 
-        <div
-          class="slides-viewport"
-          @touchstart.passive="onTouchStart"
-          @touchend.passive="onTouchEnd"
-        >
-          <div class="slides-track" :style="trackStyle">
-            <figure v-for="(slide, index) in slides" :key="slide" class="slide">
-              <img
-                :src="slide"
-                :alt="`Prenup photo ${index + 1}`"
-                class="slide-image"
-                :loading="index === 0 ? 'eager' : 'lazy'"
-              />
-            </figure>
+          <div
+            class="slides-viewport"
+            @touchstart.passive="onTouchStart"
+            @touchend.passive="onTouchEnd"
+          >
+            <div class="slides-track" :style="trackStyle">
+              <figure v-for="(slide, index) in slides" :key="slide" class="slide">
+                <img
+                  :src="slide"
+                  :alt="`Prenup photo ${index + 1}`"
+                  class="slide-image"
+                  :loading="index === 0 ? 'eager' : 'lazy'"
+                />
+              </figure>
+            </div>
+          </div>
+
+          <div class="overlay" />
+
+          <div class="slide-header">
+            <p class="eyebrow">PRENUP GALLERY</p>
+          </div>
+
+          <div class="tablist" role="tablist" aria-label="Prenup slides">
+            <button
+              v-for="(slide, index) in slides"
+              :key="slide"
+              type="button"
+              class="tab"
+              :class="{ active: currentIndex === index }"
+              :aria-label="`Go to slide ${index + 1}`"
+              :aria-selected="currentIndex === index"
+              role="tab"
+              @click="onManualControl(() => goTo(index))"
+            >
+              <span class="tab-dot" />
+            </button>
           </div>
         </div>
-
-        <div class="overlay" />
-
-        <div class="slide-header">
-          <p class="eyebrow">PRENUP GALLERY</p>
-        </div>
-
-        <div class="tablist" role="tablist" aria-label="Prenup slides">
-          <button
-            v-for="(slide, index) in slides"
-            :key="slide"
-            type="button"
-            class="tab"
-            :class="{ active: currentIndex === index }"
-            :aria-label="`Go to slide ${index + 1}`"
-            :aria-selected="currentIndex === index"
-            role="tab"
-            @click="onManualControl(() => goTo(index))"
-          >
-            <span class="tab-dot" />
-          </button>
-        </div>
       </div>
-    </div>
+    </Teleport>
     <div v-if="showNoConfirm" class="confirm-overlay">
       <div class="confirm-box">
         <p class="confirm-title">Are you sure?</p>
