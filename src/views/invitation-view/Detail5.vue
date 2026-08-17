@@ -26,6 +26,10 @@ const props = defineProps({
     type: String,
     default: 'pending',
   },
+  userName: {
+    type: String,
+    default: 'Guest',
+  },
 })
 const emit = defineEmits(['update-response'])
 
@@ -259,7 +263,10 @@ onBeforeUnmount(stopAutoPlay)
             </div>
           </template>
           <template v-else>
-            <h2 class="title" v-if="response === 'pending'">Will You Attend Our Wedding?</h2>
+            <template v-if="response === 'pending'">
+              <p class="title mb-1">Dear {{ userName }},</p>
+              <h2 class="title">Will You Attend Our Wedding?</h2>
+            </template>
             <template v-if="loading">
               <p class="loading-text">Processing your response...</p>
             </template>
@@ -504,7 +511,7 @@ hr {
 
 .deck-hint {
   position: absolute;
-  bottom: 26px;
+  bottom: 12px;
   left: 50%;
   transform: translateX(-50%);
   margin: 0;

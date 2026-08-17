@@ -12,6 +12,8 @@ const guestId = computed(() => (route.params.id ? String(route.params.id) : 'gue
 const loading = ref(false)
 const userResponse = ref('pending')
 const isDoneAnimating = ref(true)
+const userName = ref('Guest')
+
 const authHeaders = () => ({
   'Content-Type': 'application/json',
   Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -41,11 +43,18 @@ const getGuestResponse = async (id) => {
     if (res.ok) {
       const data = await res.json()
       userResponse.value = data.status || 'pending'
+      userName.value = data.name || 'Guest'
     }
   } finally {
     loading.value = false
   }
 }
+const displayName = computed(() => {
+  if (userName.value) {
+    return userName.value.split(' ')[0]
+  }
+  return 'Guest'
+})
 // Play only after the cover flip finishes (1.3 s), pause+reset on close
 watch(isOpen, (val) => {
   if (val) {
@@ -144,6 +153,7 @@ watch(isOpen, (val) => {
           :guest-id="guestId"
           @close="isDetailsOpen = false"
           :userResponse="userResponse"
+          :userName="displayName"
           @update-response="userResponse = $event"
         /></div
     ></template>
