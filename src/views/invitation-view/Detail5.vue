@@ -521,11 +521,16 @@ hr {
   position: fixed;
   inset: 0;
   z-index: 998;
+  background: rgba(0, 0, 0, 0.88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .slideshow-shell {
   position: relative;
   width: 100%;
+  max-width: 720px;
   height: 100dvh;
   overflow: hidden;
   background: #1e1728;
