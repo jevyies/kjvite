@@ -64,4 +64,7 @@ hr {
   color: #2f1b47;
   line-height: 1.4;
 }
+.text-dikit {
+  line-height: 1;
+}
 </style>
