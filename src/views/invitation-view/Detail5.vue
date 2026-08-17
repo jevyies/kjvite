@@ -686,13 +686,13 @@ hr {
   }
 
   .deck-button {
-    height: 350px;
+    height: 320px;
   }
 
   .deck-card {
     top: 54px;
-    width: min(180px, 44vw);
-    height: min(220px, 54vw);
+    width: min(160px, 44vw);
+    height: min(200px, 54vw);
     padding: 8px 8px 18px;
   }
 
