@@ -13,6 +13,7 @@ const copiedId = ref(null)
 const deleteTarget = ref(null)
 const editingId = ref(null)
 const editingName = ref('')
+const editingTableNo = ref('')
 const expandedId = ref(null)
 const statusMenuId = ref(null)
 const searchQuery = ref('')
@@ -193,11 +194,17 @@ const updateGuest = async (id) => {
     const res = await fetch(`${globalRefs.BACKEND_URL}/api/admin/guests/${id}`, {
       method: 'PATCH',
       headers: authHeaders(),
-      body: JSON.stringify({ name: editingName.value.trim() }),
+      body: JSON.stringify({
+        name: editingName.value.trim(),
+        tableNo: editingTableNo.value.trim() || '',
+      }),
     })
     if (res.ok) {
       const guest = guests.value.find((g) => g.id === id)
-      if (guest) guest.name = editingName.value.trim()
+      if (guest) {
+        guest.name = editingName.value.trim()
+        guest.tableNo = editingTableNo.value.trim() || ''
+      }
       cancelEdit()
     }
   } catch {
@@ -379,6 +386,7 @@ onBeforeUnmount(() => {
               <tr>
                 <th>Name</th>
                 <th>Invitation Link</th>
+                <th class="text-center">Table Name</th>
                 <th>Status</th>
                 <th></th>
               </tr>
@@ -411,6 +419,17 @@ onBeforeUnmount(() => {
                     <span v-if="copiedId === guest.id">✓ Copied</span>
                     <span v-else>Copy</span>
                   </button>
+                </td>
+                <td data-label="Table Name" :style="{ width: '120px' }" class="text-center td-link">
+                  <input
+                    v-if="editingId === guest.id"
+                    v-model="editingTableNo"
+                    class="edit-input"
+                    @keyup.enter="updateGuest(guest.id)"
+                    @keyup.escape="cancelEdit"
+                    @click.stop
+                  />
+                  <span v-else :class="`badge-${guest.status}`">{{ guest.tableNo }}</span>
                 </td>
                 <td data-label="Status" :style="{ width: '120px' }">
                   <span class="badge" :class="`badge-${guest.status}`">{{ guest.status }}</span>

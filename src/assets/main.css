@@ -35,7 +35,7 @@ a,
   flex-direction: column;
 }
 .text-center {
-  text-align: center;
+  text-align: center !important;
 }
 .flex-grow-1 {
   flex-grow: 1;
