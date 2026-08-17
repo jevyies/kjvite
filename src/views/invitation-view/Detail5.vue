@@ -188,7 +188,7 @@ const confirmNo = async () => {
 }
 
 const openDownloadPage = () => {
-  window.open(`/qr-download/${encodeURIComponent(token.value)}`, '_blank')
+  window.open(`${globalRefs.BACKEND_URL}/api/guests/${token.value}/qrcode`, '_blank')
 }
 const isPassDeadline = computed(() => {
   const today = new Date()
