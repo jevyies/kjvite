@@ -83,7 +83,7 @@ function onManualControl(action) {
 }
 
 function openCarousel() {
-  currentIndex.value = 0
+  currentIndex.value = 2
   showCarousel.value = true
   startAutoPlay()
 }
