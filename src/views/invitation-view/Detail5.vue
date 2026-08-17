@@ -264,7 +264,7 @@ onBeforeUnmount(stopAutoPlay)
           </template>
           <template v-else>
             <template v-if="response === 'pending'">
-              <p class="title mb-1">Dear {{ userName }},</p>
+              <p class="title mb-1">Dearest {{ userName }},</p>
               <h2 class="title">Will You Attend Our Wedding?</h2>
             </template>
             <template v-if="loading">
