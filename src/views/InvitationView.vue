@@ -56,7 +56,7 @@ const displayName = computed(() => {
   return 'Guest'
 })
 const textUpper = (text) => {
-  return text.charAt(0).toUpperCase() + text.slice(1)
+  return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase()
 }
 // Play only after the cover flip finishes (1.3 s), pause+reset on close
 watch(isOpen, (val) => {
