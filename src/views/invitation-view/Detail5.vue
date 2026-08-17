@@ -14,8 +14,9 @@ import img8 from '@/assets/prenup/8.jpg'
 import img9 from '@/assets/prenup/9.jpg'
 import img10 from '@/assets/prenup/10.jpg'
 import img11 from '@/assets/prenup/11.jpg'
+import img12 from '@/assets/prenup/12.jpg'
 
-const slides = [img1, img2, img3, img4, img5, img6, img7, img8, img9, img10, img11]
+const slides = [img1, img2, img3, img4, img5, img6, img7, img8, img9, img10, img11, img12]
 const props = defineProps({
   guestId: {
     type: String,
@@ -82,7 +83,7 @@ function onManualControl(action) {
 }
 
 function openCarousel() {
-  currentIndex.value = 0
+  currentIndex.value = 2
   showCarousel.value = true
   startAutoPlay()
 }
@@ -520,11 +521,16 @@ hr {
   position: fixed;
   inset: 0;
   z-index: 998;
+  background: rgba(0, 0, 0, 0.88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .slideshow-shell {
   position: relative;
   width: 100%;
+  max-width: 720px;
   height: 100dvh;
   overflow: hidden;
   background: #1e1728;
