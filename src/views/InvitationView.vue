@@ -30,7 +30,6 @@ onMounted(async () => {
   loading.value = false
 })
 const getGuestResponse = async (id) => {
-  loading.value = true
   try {
     const res = await fetch(`${globalRefs.BACKEND_URL}/api/guests/${id}`, {
       headers: authHeaders(),
@@ -74,70 +73,80 @@ watch(isOpen, (val) => {
     <div class="petal petal-3"></div>
     <div class="petal petal-4"></div>
     <div class="petal petal-5"></div>
+    <template v-if="loading">
+      <div class="loading-overlay">
+        <div class="loading-spinner"></div>
+      </div>
+    </template>
+    <template v-else>
+      <div class="scene">
+        <div class="passport-wrap" :class="{ 'is-open': isOpen }">
+          <!-- Inner white pages (behind the cover, revealed on open) -->
+          <div class="page-inner">
+            <div class="inner-content">
+              <h2 class="inner-heading">You're Cordially Invited</h2>
+              <p class="inner-sub">Keann &amp; Jenny · October 9, 2026</p>
 
-    <div class="scene">
-      <div class="passport-wrap" :class="{ 'is-open': isOpen }">
-        <!-- Inner white pages (behind the cover, revealed on open) -->
-        <div class="page-inner">
-          <div class="inner-content">
-            <h2 class="inner-heading">You're Cordially Invited</h2>
-            <p class="inner-sub">Keann &amp; Jenny · October 9, 2026</p>
-
-            <!-- Image slots — replace src attributes to add photos -->
-            <div class="img-grid">
-              <div class="img-slot main-slot">
-                <video
-                  ref="videoRef"
-                  src="@/assets/kj-intro.mp4"
-                  class="main-video"
-                  preload="auto"
-                  muted
-                  playsinline
-                ></video>
+              <!-- Image slots — replace src attributes to add photos -->
+              <div class="img-grid">
+                <div class="img-slot main-slot">
+                  <video
+                    ref="videoRef"
+                    src="@/assets/kj-intro.mp4"
+                    class="main-video"
+                    preload="auto"
+                    muted
+                    playsinline
+                  ></video>
+                </div>
+                <div class="img-row justify-center">
+                  <button
+                    type="button"
+                    class="boarding-pass"
+                    @click="isDetailsOpen = true"
+                    aria-label="Open invitation details"
+                  >
+                    <img src="@/assets/boarding-pass.png" class="sm-img" />
+                  </button>
+                </div>
               </div>
-              <div class="img-row justify-center">
-                <button
-                  type="button"
-                  class="boarding-pass"
-                  @click="isDetailsOpen = true"
-                  aria-label="Open invitation details"
-                >
-                  <img src="@/assets/boarding-pass.png" class="sm-img" />
-                </button>
-              </div>
+              <p class="mb-0 text-center">Click the Boarding Pass for more details.</p>
             </div>
-            <p class="mb-0 text-center">Click the Boarding Pass for more details.</p>
+          </div>
+
+          <!-- Front cover — flips open -->
+          <div class="page-cover">
+            <div class="book-spine"></div>
           </div>
         </div>
 
-        <!-- Front cover — flips open -->
-        <div class="page-cover">
-          <div class="book-spine"></div>
-        </div>
-      </div>
+        <!-- Open Me button -->
+        <!-- <Transition name="fade-btn"> -->
+        <button v-if="!isOpen" class="open-btn" @click="isOpen = true">
+          ✦ &nbsp;Open Me&nbsp; ✦
+        </button>
+        <!-- </Transition> -->
 
-      <!-- Open Me button -->
-      <!-- <Transition name="fade-btn"> -->
-      <button v-if="!isOpen" class="open-btn" @click="isOpen = true">
-        ✦ &nbsp;Open Me&nbsp; ✦
-      </button>
-      <!-- </Transition> -->
+        <!-- Close button -->
+        <!-- <Transition name="fade-btn"> -->
+        <button
+          v-if="isOpen"
+          class="close-btn"
+          @click="isOpen = false"
+          :disabled="!isDoneAnimating"
+        >
+          ← Close
+        </button>
+        <!-- </Transition> -->
 
-      <!-- Close button -->
-      <!-- <Transition name="fade-btn"> -->
-      <button v-if="isOpen" class="close-btn" @click="isOpen = false" :disabled="!isDoneAnimating">
-        ← Close
-      </button>
-      <!-- </Transition> -->
-
-      <InvitationDetails
-        :open="isDetailsOpen"
-        :guest-id="guestId"
-        @close="isDetailsOpen = false"
-        :userResponse="userResponse"
-        @update-response="userResponse = $event"
-      />
-    </div>
+        <InvitationDetails
+          :open="isDetailsOpen"
+          :guest-id="guestId"
+          @close="isDetailsOpen = false"
+          :userResponse="userResponse"
+          @update-response="userResponse = $event"
+        /></div
+    ></template>
   </div>
 </template>
 
@@ -508,6 +517,33 @@ watch(isOpen, (val) => {
 
   .img-row {
     height: 110px;
+  }
+}
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+.loading-spinner {
+  border: 6px solid #f3f3f3;
+  border-top: 6px solid #5b2d8e;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
   }
 }
 </style>
