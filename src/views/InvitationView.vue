@@ -51,10 +51,13 @@ const getGuestResponse = async (id) => {
 }
 const displayName = computed(() => {
   if (userName.value) {
-    return userName.value.split(' ')[0]
+    return textUpper(userName.value.split(' ')[0])
   }
   return 'Guest'
 })
+const textUpper = (text) => {
+  return text.charAt(0).toUpperCase() + text.slice(1)
+}
 // Play only after the cover flip finishes (1.3 s), pause+reset on close
 watch(isOpen, (val) => {
   if (val) {
