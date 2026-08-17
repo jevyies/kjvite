@@ -7,11 +7,11 @@
           With all that we have, we've been truly blessed. Your presence and prayers are all that we
           request. But if you desire to give nonetheless, monetary gift is one we humbly suggest. If
           you need assistance in sending your gift, please reach out
-          <a href="https://www.facebook.com/remedios.asingua" class="font-weight-bold text-black"
+          <a href="https://www.facebook.com/junrem" class="font-weight-bold text-black"
             >Juniel Labial</a
           >
           and
-          <a href="https://www.facebook.com/junrem" class="font-weight-bold text-black"
+          <a href="https://www.facebook.com/remedios.asingua" class="font-weight-bold text-black"
             >Remy Labial</a
           >.
         </p>
