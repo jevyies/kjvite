@@ -56,7 +56,7 @@ function pad(n) {
         <img src="@/assets/logo.png" alt="Keann & Jenny" class="couple-logo" />
 
         <!-- Names -->
-        <h1 class="couple-names">Keann &amp; Jenny</h1>
+        <h1 class="couple-names-7">Keann &amp; Jenny</h1>
 
         <!-- Tagline -->
         <p class="tagline">Joined in Love, Bound by Faith</p>
@@ -249,6 +249,12 @@ function pad(n) {
   font-size: clamp(2.2rem, 7vw, 3.5rem);
   color: #5b2d8e;
   text-shadow: 0 2px 16px rgba(130, 60, 180, 0.25);
+  margin: 0.5rem 0;
+}
+.couple-names-7 {
+  font-family: 'Great Vibes', cursive;
+  font-size: clamp(2.5rem, 8vw, 3.8rem);
+  color: #50267d;
   margin: 0.5rem 0;
 }
 </style>

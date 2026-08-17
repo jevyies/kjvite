@@ -411,7 +411,7 @@ onBeforeUnmount(stopAutoPlay)
   position: relative;
   display: block;
   width: 100%;
-  height: 350px;
+  height: 320px;
   border: 0;
   padding: 0;
   border-radius: 0;
@@ -424,8 +424,8 @@ onBeforeUnmount(stopAutoPlay)
   position: absolute;
   top: 48px;
   left: 50%;
-  width: min(220px, 42vw);
-  height: min(350px, 52vw);
+  width: min(160px, 44vw);
+  height: min(200px, 54vw);
   margin: 0;
   padding: 10px 10px 22px;
   background: #fff;
