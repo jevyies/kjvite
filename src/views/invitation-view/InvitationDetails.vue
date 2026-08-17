@@ -20,6 +20,10 @@ defineProps({
     type: String,
     default: 'pending',
   },
+  userName: {
+    type: String,
+    default: 'Guest',
+  },
 })
 
 const emit = defineEmits(['close', 'update-response'])
@@ -49,6 +53,7 @@ const emit = defineEmits(['close', 'update-response'])
               <Detail5
                 :guest-id="guestId"
                 :userResponse="userResponse"
+                :userName="userName"
                 @update-response="emit('update-response', $event)"
               />
             </section>
