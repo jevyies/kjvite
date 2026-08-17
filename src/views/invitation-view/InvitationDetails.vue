@@ -4,6 +4,8 @@ import Detail2 from './Detail2.vue'
 import Detail3 from './Detail3.vue'
 import Detail4 from './Detail4.vue'
 import Detail5 from './Detail5.vue'
+import Detail6 from './Detail6.vue'
+import Detail7 from './Detail7.vue'
 
 defineProps({
   open: {
@@ -14,9 +16,13 @@ defineProps({
     type: String,
     default: 'guest',
   },
+  userResponse: {
+    type: String,
+    default: 'pending',
+  },
 })
 
-const emit = defineEmits(['close'])
+const emit = defineEmits(['close', 'update-response'])
 </script>
 
 <template>
@@ -40,8 +46,20 @@ const emit = defineEmits(['close'])
               <Detail4 />
             </section>
             <section class="snap-page">
-              <Detail5 :guest-id="guestId" />
+              <Detail5
+                :guest-id="guestId"
+                :userResponse="userResponse"
+                @update-response="emit('update-response', $event)"
+              />
             </section>
+            <template v-if="userResponse === 'accepted'">
+              <section class="snap-page">
+                <Detail6 />
+              </section>
+              <section class="snap-page">
+                <Detail7 />
+              </section>
+            </template>
           </div>
         </div>
       </div>

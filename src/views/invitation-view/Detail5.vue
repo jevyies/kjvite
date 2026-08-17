@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onBeforeUnmount, ref } from 'vue'
+import { computed, onBeforeUnmount, ref, inject } from 'vue'
 import { useRoute } from 'vue-router'
 import QRCode from 'qrcode'
 
@@ -21,8 +21,17 @@ const props = defineProps({
     type: String,
     default: 'guest',
   },
+  userResponse: {
+    type: String,
+    default: 'pending',
+  },
 })
+const emit = defineEmits(['update-response'])
 
+const authHeaders = () => ({
+  'Content-Type': 'application/json',
+  Authorization: `Bearer ${localStorage.getItem('token')}`,
+})
 const currentIndex = ref(0)
 const touchStartX = ref(null)
 const showCarousel = ref(false)
@@ -30,6 +39,10 @@ const route = useRoute()
 const response = ref('pending')
 const showNoConfirm = ref(false)
 const qrDataUrl = ref('')
+const deadlineDate = new Date(window.GLOBAL_RSVP_DEADLINE || '2026-09-15')
+const loading = ref(false)
+const somethingWentWrong = ref(false)
+const globalRefs = inject('globalRefs')
 
 let intervalId = null
 
@@ -103,36 +116,109 @@ function onTouchEnd(event) {
 const token = computed(() => props.guestId || (route.params.id ? String(route.params.id) : 'guest'))
 
 const invitationUrl = computed(() => {
-  const base = typeof window !== 'undefined' ? window.location.origin : ''
-  return `${base}/${encodeURIComponent(token.value)}`
+  return `${encodeURIComponent(token.value)}`
 })
 
 const onYes = async () => {
-  response.value = 'yes'
-  showNoConfirm.value = false
-  qrDataUrl.value = await QRCode.toDataURL(invitationUrl.value, {
-    width: 260,
-    margin: 2,
-    errorCorrectionLevel: 'M',
-    color: {
-      dark: '#1f0d39',
-      light: '#ffffff',
-    },
-  })
+  somethingWentWrong.value = false
+  loading.value = true
+  try {
+    const res = await fetch(`${globalRefs.BACKEND_URL}/api/guests/${token.value}/rsvp`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ status: 'accepted' }),
+    })
+    if (res.status === 401 || res.status === 403 || res.status === 404) {
+      somethingWentWrong.value = true
+      return
+    }
+    if (res.ok) {
+      response.value = 'accepted'
+      emit('update-response', 'accepted')
+      showNoConfirm.value = false
+      qrDataUrl.value = await QRCode.toDataURL(invitationUrl.value, {
+        width: 150,
+        margin: 2,
+        errorCorrectionLevel: 'M',
+        color: {
+          dark: '#1f0d39',
+          light: '#ffffff',
+        },
+      })
+    }
+  } catch (error) {
+    somethingWentWrong.value = true
+  } finally {
+    loading.value = false
+  }
 }
 
 const onNo = () => {
   showNoConfirm.value = true
 }
 
-const confirmNo = () => {
-  response.value = 'no'
-  showNoConfirm.value = false
+const confirmNo = async () => {
+  somethingWentWrong.value = false
+  loading.value = true
+  try {
+    const res = await fetch(`${globalRefs.BACKEND_URL}/api/guests/${token.value}/rsvp`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ status: 'rejected' }),
+    })
+    if (res.status === 401 || res.status === 403 || res.status === 404) {
+      somethingWentWrong.value = true
+      return
+    }
+    if (res.ok) {
+      response.value = 'rejected'
+      emit('update-response', 'rejected')
+      showNoConfirm.value = false
+    }
+  } catch (error) {
+    somethingWentWrong.value = true
+  } finally {
+    loading.value = false
+  }
 }
 
 const openDownloadPage = () => {
   window.open(`/qr-download/${encodeURIComponent(token.value)}`, '_blank')
 }
+const isPassDeadline = computed(() => {
+  const today = new Date()
+  return today > deadlineDate
+})
+const onRevoke = () => {
+  response.value = 'pending'
+  emit('update-response', 'pending')
+}
+const onTryAgain = () => {
+  somethingWentWrong.value = false
+  loading.value = false
+  response.value = 'pending'
+  emit('update-response', 'pending')
+}
+watch(
+  () => props.userResponse,
+  async (newVal) => {
+    qrDataUrl.value = ''
+    response.value = newVal
+    console.log(response.value)
+    if (newVal === 'accepted') {
+      qrDataUrl.value = await QRCode.toDataURL(invitationUrl.value, {
+        width: 150,
+        margin: 2,
+        errorCorrectionLevel: 'M',
+        color: {
+          dark: '#1f0d39',
+          light: '#ffffff',
+        },
+      })
+    }
+  },
+  { immediate: true },
+)
 onBeforeUnmount(stopAutoPlay)
 </script>
 
@@ -152,53 +238,108 @@ onBeforeUnmount(stopAutoPlay)
       </button>
       <div :style="{ padding: '10px' }">
         <hr />
-        <div class="panel mb-2">
-          <h2 class="title" v-if="response === 'pending'">Will You Attend Our Wedding?</h2>
+        <div class="panel mb-2 mt-2">
+          <template v-if="isPassDeadline && response === 'pending'">
+            <div class="deadline-card">
+              <div class="deadline-badge">
+                <span class="deadline-dot" />
+                RSVP Closed
+              </div>
+              <p class="deadline-text">
+                Thank you for visiting our invitation. Online responses are now closed, but your
+                presence is still warmly appreciated.
+              </p>
 
-          <div v-if="response === 'pending'" class="actions">
-            <button type="button" class="btn yes" @click="onYes">Yes, I will attend</button>
-            <button type="button" class="btn no" @click="onNo">No, I cannot attend</button>
-          </div>
-
-          <div v-if="response === 'yes'" class="result-block">
-            <p class="result-title">Thank you for your response.</p>
-            <p class="result-sub">Please save your guest QR code.</p>
-
-            <div class="qr-box">
-              <img v-if="qrDataUrl" :src="qrDataUrl" alt="Guest QR code" class="qr-image" />
+              <div class="deadline-note">
+                <p class="deadline-note-label">Need help?</p>
+                <p class="deadline-note-text">
+                  Please contact the couple directly if you need any assistance.
+                </p>
+              </div>
             </div>
+          </template>
+          <template v-else>
+            <h2 class="title" v-if="response === 'pending'">Will You Attend Our Wedding?</h2>
+            <template v-if="loading">
+              <p class="loading-text">Processing your response...</p>
+            </template>
+            <template v-else-if="somethingWentWrong">
+              <div class="text-center">
+                <p class="error-text mt-1 mb-1">
+                  Something went wrong while processing your response. Please try again.
+                </p>
 
-            <button type="button" class="btn download" @click="openDownloadPage">
-              Download QR
-            </button>
-          </div>
+                <a href="javascript:void(0);" @click="onTryAgain" class="result-sub underlined"
+                  >Try Again</a
+                >
+              </div>
+            </template>
+            <template v-else>
+              <div v-if="response === 'pending'" class="actions">
+                <button type="button" class="btn accepted" @click="onYes">
+                  Yes, I will attend
+                </button>
+                <button type="button" class="btn no" @click="onNo">No, I cannot attend</button>
+              </div>
 
-          <div v-if="response === 'no'" class="result-block">
-            <p class="result-title">Thank you for your response.</p>
-            <p class="result-sub">We appreciate your time and understanding.</p>
-          </div>
-        </div>
+              <div v-if="response === 'accepted'" class="result-block">
+                <p class="title">Thank you for your response.</p>
+                <p class="result-sub">Please save your guest QR code.</p>
 
-        <div v-if="showNoConfirm" class="confirm-overlay">
-          <div class="confirm-box">
-            <p class="confirm-title">Are you sure?</p>
-            <p class="confirm-sub">You can still change your response now.</p>
-            <div class="confirm-actions">
-              <button type="button" class="confirm-btn keep" @click="showNoConfirm = false">
-                Go Back
-              </button>
-              <button type="button" class="confirm-btn leave" @click="confirmNo">
-                Yes, I'm Sure
-              </button>
-            </div>
-          </div>
+                <div class="qr-box">
+                  <img v-if="qrDataUrl" :src="qrDataUrl" alt="Guest QR code" class="qr-image" />
+                </div>
+
+                <button
+                  type="button"
+                  class="btn download"
+                  :style="{ marginBottom: '8px' }"
+                  @click="openDownloadPage"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    width="24"
+                    height="24"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    fill="none"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                  Download QR
+                </button>
+
+                <a href="javascript:void(0);" @click="onRevoke" class="result-sub underlined"
+                  >Change my response</a
+                >
+                <p class="mt-1">
+                  <small>↓ Scroll down to view more details</small>
+                </p>
+              </div>
+
+              <div v-if="response === 'rejected'" class="result-block">
+                <p class="title">Thank you for your response.</p>
+                <p class="result-sub" :style="{ paddingInline: '10px' }">
+                  We appreciate your response. See you next time!
+                </p>
+                <a href="javascript:void(0);" @click="onRevoke" class="result-sub underlined"
+                  >Change my response</a
+                >
+              </div>
+            </template>
+          </template>
         </div>
       </div>
     </div>
     <div v-if="showCarousel" class="carousel-modal">
       <div class="slideshow-shell">
         <button type="button" class="close-btn" aria-label="Close gallery" @click="closeCarousel">
-          Close
+          ×
         </button>
 
         <div
@@ -238,6 +379,18 @@ onBeforeUnmount(stopAutoPlay)
           >
             <span class="tab-dot" />
           </button>
+        </div>
+      </div>
+    </div>
+    <div v-if="showNoConfirm" class="confirm-overlay">
+      <div class="confirm-box">
+        <p class="confirm-title">Are you sure?</p>
+        <p class="confirm-sub">You can still change your response now.</p>
+        <div class="confirm-actions">
+          <button type="button" class="confirm-btn keep" @click="showNoConfirm = false">
+            Go Back
+          </button>
+          <button type="button" class="confirm-btn leave" @click="confirmNo">Yes, I'm Sure</button>
         </div>
       </div>
     </div>
@@ -367,7 +520,7 @@ hr {
 .carousel-modal {
   position: fixed;
   inset: 0;
-  z-index: 60;
+  z-index: 998;
 }
 
 .slideshow-shell {
@@ -382,11 +535,11 @@ hr {
   position: absolute;
   top: max(14px, env(safe-area-inset-top));
   right: 14px;
-  z-index: 999;
+  z-index: 9999;
   border: 0;
   border-radius: 999px;
-  padding: 0.45rem 0.9rem;
-  font-size: 0.78rem;
+  padding: 0.25rem 0.6rem;
+  font-size: 1rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: #fff;
@@ -456,9 +609,9 @@ hr {
 .eyebrow {
   margin: 0;
   color: rgba(255, 255, 255, 0.92);
-  font-family: 'Bell MT', serif;
+  font-family: 'Cormorant Garamond', Georgia, serif;
   letter-spacing: 0.24em;
-  font-size: clamp(0.7rem, 2.7vw, 0.95rem);
+  font-size: 1.25rem;
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
 }
 
@@ -598,21 +751,12 @@ hr {
   }
 }
 
-.eyebrow {
-  margin: 0;
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  text-align: center;
-  color: #8d62ba;
-  font-size: 0.68rem;
-}
-
 .title {
-  margin: 0.35rem 0 0;
   text-align: center;
   color: #50267d;
-  font-size: clamp(1.3rem, 6vw, 1.8rem);
+  font-size: clamp(2rem, 6vw, 1.8rem);
   line-height: 1.15;
+  font-family: 'Great Vibes', cursive;
 }
 
 .actions {
@@ -620,6 +764,7 @@ hr {
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
+  margin-inline: 1.2rem;
 }
 
 .btn {
@@ -631,7 +776,7 @@ hr {
   cursor: pointer;
 }
 
-.yes {
+.accepted {
   background: linear-gradient(90deg, #5d3da8 0%, #7e57c2 100%);
   color: #fff;
 }
@@ -670,15 +815,19 @@ hr {
 
 .qr-image {
   width: min(62vw, 230px);
-  max-width: 230px;
+  max-width: 150px;
   display: block;
 }
 
 .download {
-  margin-top: 0.7rem;
-  width: 100%;
+  margin: 0.7rem auto 0;
+  width: min(62vw, 250px);
   background: #2e1b55;
   color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
 }
 
 .confirm-overlay {
@@ -697,6 +846,94 @@ hr {
   background: #fff;
   padding: 0.95rem;
   box-sizing: border-box;
+}
+
+.deadline-card {
+  margin: 0.25rem 0.5rem 0.15rem;
+  padding: 1.1rem 1rem;
+  border-radius: 18px;
+  text-align: center;
+  color: #fff;
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0) 42%),
+    linear-gradient(135deg, #3d215f 0%, #5f3a91 52%, #8b5cc7 100%);
+  box-shadow: 0 14px 28px rgba(68, 34, 110, 0.24);
+  position: relative;
+  overflow: hidden;
+}
+
+.deadline-card::after {
+  content: '';
+  position: absolute;
+  inset: auto -18% -34% auto;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.deadline-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.deadline-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ffd27a;
+  box-shadow: 0 0 0 4px rgba(255, 210, 122, 0.15);
+}
+
+.deadline-title {
+  margin: 0.95rem 0 0;
+  font-family: 'Great Vibes', cursive;
+  font-size: clamp(2rem, 6vw, 2.45rem);
+  line-height: 1.05;
+  color: #fff;
+}
+
+.deadline-text {
+  margin: 0.7rem auto 0;
+  max-width: 28ch;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.deadline-note {
+  margin-top: 1rem;
+  padding: 0.85rem 0.9rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.deadline-note-label {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #ffdca4;
+}
+
+.deadline-note-text {
+  margin: 0.35rem 0 0;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.88);
 }
 
 .confirm-title {
@@ -737,5 +974,9 @@ hr {
 .leave {
   background: #4f2b82;
   color: #fff;
+}
+.underlined {
+  text-decoration: underline;
+  cursor: pointer;
 }
 </style>

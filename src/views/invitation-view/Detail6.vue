@@ -1,75 +1,66 @@
-<script setup></script>
-
 <template>
-  <article class="detail-page detail-4">
-    <div class="panel">
-      <p class="eyebrow">RSVP</p>
-      <h2 class="title">Will You Attend Our Wedding?</h2>
-
-      <div v-if="response === 'pending'" class="actions">
-        <button type="button" class="btn yes" @click="onYes">Yes, I will attend</button>
-        <button type="button" class="btn no" @click="onNo">No, I cannot attend</button>
-      </div>
-
-      <div v-if="response === 'yes'" class="result-block">
-        <p class="result-title">Thank you for your response.</p>
-        <p class="result-sub">Please save your guest QR code.</p>
-
-        <div class="qr-box">
-          <img v-if="qrDataUrl" :src="qrDataUrl" alt="Guest QR code" class="qr-image" />
+  <article class="detail-page detail-6">
+    <div class="card-frosty">
+      <div>
+        <h1 class="text-head">PROGRAM DETAILS</h1>
+        <div class="d-flex justify-center">
+          <img src="@/assets/details/program.png" alt="Program Details" class="program-image" />
         </div>
-
-        <button type="button" class="btn download" @click="openDownloadPage">
-          Download QR on New Page
-        </button>
       </div>
-
-      <div v-if="response === 'no'" class="result-block">
-        <p class="result-title">Thank you for your response.</p>
-        <p class="result-sub">We appreciate your time and understanding.</p>
-      </div>
-    </div>
-
-    <div v-if="showNoConfirm" class="confirm-overlay">
-      <div class="confirm-box">
-        <p class="confirm-title">Are you sure?</p>
-        <p class="confirm-sub">You can still change your response now.</p>
-        <div class="confirm-actions">
-          <button type="button" class="confirm-btn keep" @click="showNoConfirm = false">
-            Go Back
-          </button>
-          <button type="button" class="confirm-btn leave" @click="confirmNo">Yes, I'm Sure</button>
+      <hr />
+      <div :style="{ paddingInline: '10px' }">
+        <h1 class="text-head mb-0">SNAP & SHARE</h1>
+        <div class="d-flex justify-center">
+          <img src="@/assets/details/camera.png" alt="Snap & Share" class="cam-image" />
         </div>
+        <p class="text-center">Capture and share your moments with us using our hashtag!</p>
+        <p class="text-center font-weight-bold hashtag">#oriJENNYllymeantforKEANN</p>
       </div>
     </div>
   </article>
 </template>
-
 <style scoped>
-.detail-page {
-  width: 100%;
-  min-height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  box-sizing: border-box;
-  position: relative;
+.detail-6 {
+  font-family: 'Bell MT', serif;
 }
-
-.detail-4 {
-  /* background:
-    radial-gradient(circle at 80% 20%, rgba(162, 101, 219, 0.18), transparent 34%),
-    linear-gradient(180deg, #f8f2fc 0%, #ffffff 100%); */
+.text-head {
+  color: #50267d;
+  text-align: center;
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.1em;
 }
-
-.panel {
-  width: 100%;
-  border-radius: 20px;
-  border: 1px solid rgba(127, 82, 180, 0.25);
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 16px 32px rgba(93, 54, 136, 0.16);
-  padding: 1.2rem 1rem;
-  box-sizing: border-box;
+hr {
+  border: 0;
+  height: 1px;
+  background: #5b2d8e;
+  margin: 0.5rem 0;
+}
+.paragraph {
+  text-align: justify;
+  font-size: 15px;
+  color: #2f1b47;
+  line-height: 1.4;
+}
+p {
+  text-align: center;
+  color: #2f1b47;
+}
+.program-image {
+  width: clamp(150px, 60vw, 200px);
+  height: auto;
+  margin-bottom: 1.2rem;
+  filter: drop-shadow(0 2px 8px rgba(130, 60, 180, 0.2));
+}
+.hashtag {
+  font-size: 1.25rem;
+  color: #50267d;
+  letter-spacing: 0.08em;
+  margin-top: 0.25rem;
+}
+.cam-image {
+  width: clamp(30px, 60vw, 60px);
+  height: auto;
+  margin-bottom: 0.5rem;
+  filter: drop-shadow(0 2px 8px rgba(130, 60, 180, 0.2));
 }
 </style>
