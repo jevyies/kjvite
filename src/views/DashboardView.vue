@@ -140,11 +140,13 @@ const deleteGuest = async () => {
 const startEdit = (guest) => {
   editingId.value = guest.id
   editingName.value = guest.name
+  editingTableNo.value = guest.tableNo
 }
 
 const cancelEdit = () => {
   editingId.value = null
   editingName.value = ''
+  editingTableNo.value = ''
 }
 
 const toggleExpand = (id) => {
@@ -420,7 +422,7 @@ onBeforeUnmount(() => {
                     <span v-else>Copy</span>
                   </button>
                 </td>
-                <td data-label="Table Name" :style="{ width: '120px' }" class="text-center td-link">
+                <td data-label="Table Name" class="text-center td-link">
                   <input
                     v-if="editingId === guest.id"
                     v-model="editingTableNo"
@@ -429,7 +431,7 @@ onBeforeUnmount(() => {
                     @keyup.escape="cancelEdit"
                     @click.stop
                   />
-                  <span v-else :class="`badge-${guest.status}`">{{ guest.tableNo }}</span>
+                  <span v-else>{{ guest.tableNo }}</span>
                 </td>
                 <td data-label="Status" :style="{ width: '120px' }">
                   <span class="badge" :class="`badge-${guest.status}`">{{ guest.status }}</span>
@@ -927,7 +929,7 @@ tbody tr:hover td {
 .td-actions {
   text-align: right;
   white-space: nowrap;
-  width: 100px;
+  width: 120px;
   position: relative;
 }
 .action-btn {
@@ -1263,6 +1265,7 @@ tbody tr:hover td {
   tbody tr.is-expanded td[data-label='Status'],
   tbody tr.is-expanded td.td-actions {
     display: flex;
+    width: 100%;
   }
 
   .td-name {
