@@ -1,9 +1,7 @@
 <script setup>
-import { ref, computed, watch, onMounted, onBeforeUnmount, inject } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { apiFetch, logout } from '@/utils/api'
 
-const router = useRouter()
-const globalRefs = inject('globalRefs')
 const guests = ref([])
 const newGuestName = ref('')
 const tableLoading = ref(false)
@@ -55,11 +53,6 @@ const acceptedCount = computed(() => guests.value.filter((g) => g.status === 'ac
 const pendingCount = computed(() => guests.value.filter((g) => g.status === 'pending').length)
 const declinedCount = computed(() => guests.value.filter((g) => g.status === 'rejected').length)
 
-const authHeaders = () => ({
-  'Content-Type': 'application/json',
-  Authorization: `Bearer ${localStorage.getItem('token')}`,
-})
-
 const inviteLink = (token) => `${window.location.origin}/invite/${token}`
 
 const fetchGuests = async () => {
@@ -72,11 +65,8 @@ const fetchGuests = async () => {
 const getGuests = async () => {
   tableLoading.value = true
   try {
-    const res = await fetch(`${globalRefs.BACKEND_URL}/api/admin/guests`, {
-      headers: authHeaders(),
-    })
+    const res = await apiFetch('/api/admin/guests')
     if (res.status === 401 || res.status === 403) {
-      router.push('/admin')
       return
     }
     if (res.ok) {
@@ -93,11 +83,13 @@ const addGuest = async () => {
   addError.value = ''
   addLoading.value = true
   try {
-    const res = await fetch(`${globalRefs.BACKEND_URL}/api/admin/guests`, {
+    const res = await apiFetch('/api/admin/guests', {
       method: 'POST',
-      headers: authHeaders(),
       body: JSON.stringify({ name: newGuestName.value.trim() }),
     })
+    if (res.status === 401 || res.status === 403) {
+      return
+    }
     if (res.ok) {
       newGuestName.value = ''
       currentPage.value = 1
@@ -124,10 +116,12 @@ const deleteGuest = async () => {
   const { id } = deleteTarget.value
   deleteTarget.value = null
   try {
-    const res = await fetch(`${globalRefs.BACKEND_URL}/api/admin/guests/${id}`, {
+    const res = await apiFetch(`/api/admin/guests/${id}`, {
       method: 'DELETE',
-      headers: authHeaders(),
     })
+    if (res.status === 401 || res.status === 403) {
+      return
+    }
     if (res.ok) {
       guests.value = guests.value.filter((g) => g.id !== id)
       setLocalStorage()
@@ -197,14 +191,16 @@ const showToast = (message, type) => {
 const updateGuest = async (id) => {
   if (!editingName.value.trim()) return
   try {
-    const res = await fetch(`${globalRefs.BACKEND_URL}/api/admin/guests/${id}`, {
+    const res = await apiFetch(`/api/admin/guests/${id}`, {
       method: 'PATCH',
-      headers: authHeaders(),
       body: JSON.stringify({
         name: editingName.value.trim(),
         tableNo: editingTableNo.value.trim() || '',
       }),
     })
+    if (res.status === 401 || res.status === 403) {
+      return
+    }
     if (res.ok) {
       const guest = guests.value.find((g) => g.id === id)
       if (guest) {
@@ -222,11 +218,13 @@ const updateGuest = async (id) => {
 
 const setGuestStatus = async (id, status) => {
   try {
-    const res = await fetch(`${globalRefs.BACKEND_URL}/api/guests/${id}/rsvp`, {
+    const res = await apiFetch(`/api/guests/${id}/rsvp`, {
       method: 'POST',
-      headers: authHeaders(),
       body: JSON.stringify({ status }),
     })
+    if (res.status === 401 || res.status === 403) {
+      return
+    }
     if (res.ok) {
       const guest = guests.value.find((g) => g.token === id)
       if (guest) guest.status = status
@@ -254,11 +252,6 @@ const copyLink = async (guestId, token) => {
   }
 }
 
-const logout = () => {
-  localStorage.removeItem('token')
-  router.push('/admin')
-}
-
 const handleDocumentClick = () => {
   closeStatusMenu()
 }
@@ -270,10 +263,12 @@ const handleViewportChange = () => {
 const resetTableNo = async () => {
   tableLoading.value = true
   try {
-    const res = await fetch(`${globalRefs.BACKEND_URL}/api/guests/reset/tableNo`, {
+    const res = await apiFetch('/api/guests/reset/tableNo', {
       method: 'GET',
-      headers: authHeaders(),
     })
+    if (res.status === 401 || res.status === 403) {
+      return
+    }
     if (res.ok) {
       guests.value.forEach((guest) => {
         guest.tableNo = null
