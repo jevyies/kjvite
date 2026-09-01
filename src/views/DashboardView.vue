@@ -1,9 +1,7 @@
 <script setup>
-import { ref, computed, watch, onMounted, onBeforeUnmount, inject } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { apiFetch, logout } from '@/utils/api'
 
-const router = useRouter()
-const globalRefs = inject('globalRefs')
 const guests = ref([])
 const newGuestName = ref('')
 const tableLoading = ref(false)
@@ -21,6 +19,7 @@ const toastMessage = ref('')
 const selectedCard = ref('all')
 const statusMenuPosition = ref({ top: 0, left: 0 })
 const currentPage = ref(1)
+const toastType = ref('success')
 const PAGE_SIZE = 10
 let toastTimer = null
 
@@ -54,11 +53,6 @@ const acceptedCount = computed(() => guests.value.filter((g) => g.status === 'ac
 const pendingCount = computed(() => guests.value.filter((g) => g.status === 'pending').length)
 const declinedCount = computed(() => guests.value.filter((g) => g.status === 'rejected').length)
 
-const authHeaders = () => ({
-  'Content-Type': 'application/json',
-  Authorization: `Bearer ${localStorage.getItem('token')}`,
-})
-
 const inviteLink = (token) => `${window.location.origin}/invite/${token}`
 
 const fetchGuests = async () => {
@@ -71,11 +65,8 @@ const fetchGuests = async () => {
 const getGuests = async () => {
   tableLoading.value = true
   try {
-    const res = await fetch(`${globalRefs.BACKEND_URL}/api/admin/guests`, {
-      headers: authHeaders(),
-    })
+    const res = await apiFetch('/api/admin/guests')
     if (res.status === 401 || res.status === 403) {
-      router.push('/admin')
       return
     }
     if (res.ok) {
@@ -92,11 +83,13 @@ const addGuest = async () => {
   addError.value = ''
   addLoading.value = true
   try {
-    const res = await fetch(`${globalRefs.BACKEND_URL}/api/admin/guests`, {
+    const res = await apiFetch('/api/admin/guests', {
       method: 'POST',
-      headers: authHeaders(),
       body: JSON.stringify({ name: newGuestName.value.trim() }),
     })
+    if (res.status === 401 || res.status === 403) {
+      return
+    }
     if (res.ok) {
       newGuestName.value = ''
       currentPage.value = 1
@@ -123,17 +116,21 @@ const deleteGuest = async () => {
   const { id } = deleteTarget.value
   deleteTarget.value = null
   try {
-    const res = await fetch(`${globalRefs.BACKEND_URL}/api/admin/guests/${id}`, {
+    const res = await apiFetch(`/api/admin/guests/${id}`, {
       method: 'DELETE',
-      headers: authHeaders(),
     })
+    if (res.status === 401 || res.status === 403) {
+      return
+    }
     if (res.ok) {
       guests.value = guests.value.filter((g) => g.id !== id)
       setLocalStorage()
       if (currentPage.value > totalPages.value) currentPage.value = Math.max(1, totalPages.value)
+    } else {
+      showToast('Failed to delete guest.', 'error')
     }
   } catch {
-    // silent
+    showToast('Failed to delete guest.', 'error')
   }
 }
 
@@ -181,8 +178,9 @@ const closeStatusMenu = () => {
   statusMenuId.value = null
 }
 
-const showToast = (message) => {
+const showToast = (message, type) => {
   toastMessage.value = message
+  toastType.value = type || 'info'
   if (toastTimer) clearTimeout(toastTimer)
   toastTimer = setTimeout(() => {
     toastMessage.value = ''
@@ -193,14 +191,16 @@ const showToast = (message) => {
 const updateGuest = async (id) => {
   if (!editingName.value.trim()) return
   try {
-    const res = await fetch(`${globalRefs.BACKEND_URL}/api/admin/guests/${id}`, {
+    const res = await apiFetch(`/api/admin/guests/${id}`, {
       method: 'PATCH',
-      headers: authHeaders(),
       body: JSON.stringify({
         name: editingName.value.trim(),
         tableNo: editingTableNo.value.trim() || '',
       }),
     })
+    if (res.status === 401 || res.status === 403) {
+      return
+    }
     if (res.ok) {
       const guest = guests.value.find((g) => g.id === id)
       if (guest) {
@@ -208,27 +208,33 @@ const updateGuest = async (id) => {
         guest.tableNo = editingTableNo.value.trim() || ''
       }
       cancelEdit()
+    } else {
+      showToast('Failed to update guest.', 'error')
     }
   } catch {
-    // silent
+    showToast('Failed to update guest.', 'error')
   }
 }
 
 const setGuestStatus = async (id, status) => {
   try {
-    const res = await fetch(`${globalRefs.BACKEND_URL}/api/guests/${id}/rsvp`, {
+    const res = await apiFetch(`/api/guests/${id}/rsvp`, {
       method: 'POST',
-      headers: authHeaders(),
       body: JSON.stringify({ status }),
     })
+    if (res.status === 401 || res.status === 403) {
+      return
+    }
     if (res.ok) {
       const guest = guests.value.find((g) => g.token === id)
       if (guest) guest.status = status
       setLocalStorage()
-      showToast('Status updated successfully.')
+      showToast('Status updated successfully.', 'success')
+    } else {
+      showToast('Failed to update status.', 'error')
     }
   } catch {
-    // silent
+    showToast('Failed to update status.', 'error')
   } finally {
     closeStatusMenu()
   }
@@ -246,17 +252,37 @@ const copyLink = async (guestId, token) => {
   }
 }
 
-const logout = () => {
-  localStorage.removeItem('token')
-  router.push('/admin')
-}
-
 const handleDocumentClick = () => {
   closeStatusMenu()
 }
 
 const handleViewportChange = () => {
   closeStatusMenu()
+}
+
+const resetTableNo = async () => {
+  tableLoading.value = true
+  try {
+    const res = await apiFetch('/api/guests/reset/tableNo', {
+      method: 'GET',
+    })
+    if (res.status === 401 || res.status === 403) {
+      return
+    }
+    if (res.ok) {
+      guests.value.forEach((guest) => {
+        guest.tableNo = null
+      })
+      setLocalStorage()
+      showToast('Table numbers reset successfully.', 'success')
+    } else {
+      showToast('Failed to reset table numbers.', 'error')
+    }
+  } catch {
+    showToast('Failed to reset table numbers.', 'error')
+  } finally {
+    tableLoading.value = false
+  }
 }
 
 onMounted(() => {
@@ -356,9 +382,14 @@ onBeforeUnmount(() => {
       <section class="panel">
         <div class="d-flex justify-space-between align-center mb-1">
           <h2 class="section-title mb-0">Guests ({{ guests.length }})</h2>
-          <button class="btn-outlined" @click="getGuests" :disabled="tableLoading">
-            <span>↻ Reload Guest List</span>
-          </button>
+          <div class="d-flex gap-1">
+            <!-- <button class="btn-outlined" @click="resetTableNo" :disabled="tableLoading">
+              <span>↻ Reset Table Numbers</span>
+            </button> -->
+            <button class="btn-outlined" @click="getGuests" :disabled="tableLoading">
+              <span>↻ Reload Guest List</span>
+            </button>
+          </div>
         </div>
 
         <div v-if="!tableLoading && guests.length > 0" class="search-bar">
@@ -510,7 +541,18 @@ onBeforeUnmount(() => {
     </transition>
 
     <transition name="fade-up-toast">
-      <div v-if="toastMessage" class="toast toast-success" role="status" aria-live="polite">
+      <div
+        v-if="toastMessage"
+        class="toast"
+        :class="{
+          'toast-success': toastType == 'success',
+          'toast-warning': toastType == 'warning',
+          'toast-info': toastType == 'info',
+          'toast-danger': toastType == 'error',
+        }"
+        role="status"
+        aria-live="polite"
+      >
         {{ toastMessage }}
       </div>
     </transition>
@@ -1182,6 +1224,21 @@ tbody tr:hover td {
   background: rgba(46, 125, 50, 0.9);
   border: 1px solid rgba(74, 222, 128, 0.55);
   color: #ecfdf3;
+}
+.toast-warning {
+  background: rgba(180, 83, 9, 0.9);
+  border: 1px solid rgba(251, 191, 36, 0.55);
+  color: #fff7ed;
+}
+.toast-info {
+  background: rgba(59, 130, 246, 0.9);
+  border: 1px solid rgba(147, 197, 253, 0.55);
+  color: #eff6ff;
+}
+.toast-danger {
+  background: rgba(183, 28, 28, 0.9);
+  border: 1px solid rgba(248, 113, 113, 0.55);
+  color: #fef2f2;
 }
 
 /* ── Spinner ───────────────────────────────────────────── */

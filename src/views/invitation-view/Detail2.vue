@@ -91,7 +91,7 @@
           </p>
           <p class="text-center">Jevy Ababa</p>
           <p class="text-center">Jake Allan Andres</p>
-          <p class="text-center">Victor Recamara</p>
+          <p class="text-center">Victor Recamara Jr.</p>
         </div>
         <div>
           <p class="text-center font-bell text-uppercase font-weight-bold text-primary">
