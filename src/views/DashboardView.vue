@@ -33,6 +33,91 @@ const scannerKey = ref(0)
 const scannedResult = ref(null)
 const isScanPaused = ref(false)
 
+// ── Floating Button Bury / Swipe Gesture State ──────────────
+const isFabBuried = ref(true)
+const touchStartY = ref(null)
+const touchStartX = ref(null)
+const isDraggingFab = ref(false)
+const fabDragDeltaY = ref(0)
+let fabTouchStartTime = 0
+
+const onFabTouchStart = (e) => {
+  const touch = e.touches ? e.touches[0] : e
+  touchStartY.value = touch.clientY
+  touchStartX.value = touch.clientX
+  fabTouchStartTime = Date.now()
+  isDraggingFab.value = true
+  fabDragDeltaY.value = 0
+}
+
+const onFabTouchMove = (e) => {
+  if (!isDraggingFab.value || touchStartY.value === null) return
+  const touch = e.touches ? e.touches[0] : e
+  const deltaY = touch.clientY - touchStartY.value
+  const deltaX = touch.clientX - touchStartX.value
+
+  if (Math.abs(deltaY) > Math.abs(deltaX) || Math.abs(deltaY) > 5) {
+    if (isFabBuried.value) {
+      fabDragDeltaY.value = Math.min(0, Math.max(-56, deltaY))
+    } else {
+      fabDragDeltaY.value = Math.max(0, Math.min(56, deltaY))
+    }
+  }
+}
+
+const onFabTouchEnd = (e) => {
+  if (!isDraggingFab.value) return
+  const touch = e.changedTouches ? e.changedTouches[0] : e
+  const deltaY = touchStartY.value !== null ? touch.clientY - touchStartY.value : 0
+  const deltaX = touchStartX.value !== null ? touch.clientX - touchStartX.value : 0
+  const duration = Date.now() - fabTouchStartTime
+
+  isDraggingFab.value = false
+  fabDragDeltaY.value = 0
+  touchStartY.value = null
+  touchStartX.value = null
+
+  if (deltaY < -15) {
+    // Swiped UP -> unbury
+    isFabBuried.value = false
+    return
+  }
+  if (deltaY > 15) {
+    // Swiped DOWN -> bury
+    isFabBuried.value = true
+    return
+  }
+
+  // Tap without significant movement -> open camera scanner
+  if (Math.abs(deltaY) < 10 && Math.abs(deltaX) < 10 && duration < 350) {
+    openScanner()
+  }
+}
+
+const onFabMouseDown = (e) => {
+  if (e.button !== 0) return
+  onFabTouchStart(e)
+  const onMouseMove = (moveEvent) => onFabTouchMove(moveEvent)
+  const onMouseUp = (upEvent) => {
+    onFabTouchEnd(upEvent)
+    window.removeEventListener('mousemove', onMouseMove)
+    window.removeEventListener('mouseup', onMouseUp)
+  }
+  window.addEventListener('mousemove', onMouseMove)
+  window.addEventListener('mouseup', onMouseUp)
+}
+
+const fabStyle = computed(() => {
+  if (isDraggingFab.value && fabDragDeltaY.value !== 0) {
+    const baseOffset = isFabBuried.value ? 29 : -24
+    return {
+      transform: `translateY(${baseOffset + fabDragDeltaY.value}px)`,
+      transition: 'none',
+    }
+  }
+  return {}
+})
+
 const filteredGuests = computed(() => {
   let data = guests.value
   if (selectedCard.value !== 'all') {
@@ -683,15 +768,67 @@ onBeforeUnmount(() => {
       </section>
     </main>
 
-    <!-- Floating Camera Scan Button -->
-    <button type="button" class="fab-camera-btn" @click="openScanner" aria-label="Scan Guest QR Code"
-      title="Scan Guest QR Code">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="26" height="26" fill="none"
-        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="camera-svg-icon">
+    <!-- Floating Camera Scan Button (Buried at bottom-right, swipe up to float, swipe down to bury) -->
+    <button
+      type="button"
+      class="fab-camera-btn"
+      :class="{ 'is-buried': isFabBuried, 'is-dragging': isDraggingFab }"
+      :style="fabStyle"
+      @touchstart.passive="onFabTouchStart"
+      @touchmove.passive="onFabTouchMove"
+      @touchend="onFabTouchEnd"
+      @mousedown="onFabMouseDown"
+      aria-label="Scan Guest QR Code"
+      :title="isFabBuried ? 'Swipe up to float or tap to scan' : 'Swipe down to bury or tap to scan'"
+    >
+      <!-- Swipe indicator hint -->
+      <span class="fab-swipe-indicator" aria-hidden="true">
+        <svg
+          v-if="isFabBuried"
+          xmlns="http://www.w3.org/2000/svg"
+          width="13"
+          height="13"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="3"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <polyline points="18 15 12 9 6 15"></polyline>
+        </svg>
+        <svg
+          v-else
+          xmlns="http://www.w3.org/2000/svg"
+          width="13"
+          height="13"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="3"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </span>
+
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        width="24"
+        height="24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="camera-svg-icon"
+      >
         <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
         <circle cx="12" cy="13" r="4"></circle>
       </svg>
-      <span class="fab-pulse-ring" aria-hidden="true"></span>
+      <span v-if="!isFabBuried" class="fab-pulse-ring" aria-hidden="true"></span>
     </button>
 
     <!-- Delete confirmation modal -->
@@ -935,30 +1072,36 @@ onBeforeUnmount(() => {
 /* ── Floating Camera Button (FAB) ───────────────────────── */
 .fab-camera-btn {
   position: fixed;
-  bottom: 2rem;
+  bottom: 0;
   right: 2rem;
-  width: 60px;
-  height: 60px;
+  width: 58px;
+  height: 58px;
   border-radius: 50%;
   background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
   color: #ffffff;
-  border: 2px solid rgba(255, 215, 0, 0.45);
+  border: 2px solid rgba(255, 215, 0, 0.55);
   box-shadow:
     0 10px 25px rgba(124, 58, 237, 0.5),
     0 0 20px rgba(111, 71, 198, 0.4);
-  cursor: pointer;
+  cursor: grab;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   z-index: 95;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  transform: translateY(-24px);
   transition:
-    transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+    transform 0.38s cubic-bezier(0.34, 1.56, 0.64, 1),
     box-shadow 0.25s ease,
-    background 0.25s ease;
+    background 0.25s ease,
+    border-color 0.25s ease;
   outline: none;
 
   &:hover {
-    transform: scale(1.1) translateY(-3px);
+    transform: translateY(-28px) scale(1.05);
     box-shadow:
       0 14px 32px rgba(124, 58, 237, 0.65),
       0 0 26px rgba(255, 215, 0, 0.35);
@@ -966,18 +1109,58 @@ onBeforeUnmount(() => {
   }
 
   &:active {
-    transform: scale(0.94) translateY(0);
+    cursor: grabbing;
+  }
+
+  &.is-dragging {
+    transition: none !important;
+    cursor: grabbing;
+  }
+
+  /* Buried half-hidden state at the bottom */
+  &.is-buried {
+    transform: translateY(29px);
+    box-shadow:
+      0 -6px 20px rgba(124, 58, 237, 0.55),
+      0 0 16px rgba(255, 215, 0, 0.3);
+    border-bottom-color: transparent;
+
+    &:hover {
+      transform: translateY(22px);
+      box-shadow:
+        0 -8px 25px rgba(124, 58, 237, 0.7),
+        0 0 22px rgba(255, 215, 0, 0.45);
+    }
+
+    .camera-svg-icon {
+      transform: translateY(-6px);
+    }
+
+    .fab-swipe-indicator {
+      top: 2px;
+      bottom: auto;
+      animation: bounceSwipeUp 1.8s ease-in-out infinite;
+    }
+  }
+
+  .fab-swipe-indicator {
+    position: absolute;
+    bottom: 3px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: rgba(255, 255, 255, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    transition: all 0.25s ease;
   }
 
   .camera-svg-icon {
     position: relative;
     z-index: 2;
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
-    transition: transform 0.2s ease;
-  }
-
-  &:hover .camera-svg-icon {
-    transform: scale(1.05);
+    transition: transform 0.25s ease;
   }
 
   .fab-pulse-ring {
@@ -987,6 +1170,19 @@ onBeforeUnmount(() => {
     border: 2px solid rgba(124, 58, 237, 0.6);
     pointer-events: none;
     animation: fabPulse 2.4s cubic-bezier(0.25, 1, 0.5, 1) infinite;
+  }
+}
+
+@keyframes bounceSwipeUp {
+  0%,
+  100% {
+    transform: translateX(-50%) translateY(0);
+    opacity: 0.9;
+  }
+
+  50% {
+    transform: translateX(-50%) translateY(-3px);
+    opacity: 1;
   }
 }
 
@@ -2354,10 +2550,18 @@ tbody tr:hover td {
 /* ── Responsive ────────────────────────────────────────── */
 @media (max-width: 600px) {
   .fab-camera-btn {
-    bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
     right: calc(1.2rem + env(safe-area-inset-right, 0px));
-    width: 54px;
-    height: 54px;
+    width: 52px;
+    height: 52px;
+    transform: translateY(-18px);
+
+    &.is-buried {
+      transform: translateY(26px);
+
+      &:hover {
+        transform: translateY(20px);
+      }
+    }
   }
 
   .scanner-top-bar {
