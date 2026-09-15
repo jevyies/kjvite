@@ -44,7 +44,7 @@ const route = useRoute()
 const response = ref('pending')
 const showNoConfirm = ref(false)
 const qrDataUrl = ref('')
-const deadlineDate = new Date(window.GLOBAL_RSVP_DEADLINE || '2026-09-15')
+const deadlineDate = new Date(window.GLOBAL_RSVP_DEADLINE || '2026-09-20')
 const loading = ref(false)
 const somethingWentWrong = ref(false)
 const globalRefs = inject('globalRefs')
@@ -229,12 +229,7 @@ onBeforeUnmount(stopAutoPlay)
 <template>
   <section class="detail-page detail-5">
     <div class="intro-content card-frosty" :style="{ padding: '0 !important' }">
-      <button
-        type="button"
-        class="deck-button"
-        aria-label="Open prenup gallery"
-        @click="openCarousel"
-      >
+      <button type="button" class="deck-button" aria-label="Open prenup gallery" @click="openCarousel">
         <figure v-for="(slide, index) in deckSlides" :key="slide" class="deck-card">
           <img :src="slide" :alt="`Prenup preview ${index + 1}`" class="deck-image" />
         </figure>
@@ -276,9 +271,7 @@ onBeforeUnmount(stopAutoPlay)
                   Something went wrong while processing your response. Please try again.
                 </p>
 
-                <a href="javascript:void(0);" @click="onTryAgain" class="result-sub underlined"
-                  >Try Again</a
-                >
+                <a href="javascript:void(0);" @click="onTryAgain" class="result-sub underlined">Try Again</a>
               </div>
             </template>
             <template v-else>
@@ -297,23 +290,9 @@ onBeforeUnmount(stopAutoPlay)
                   <img v-if="qrDataUrl" :src="qrDataUrl" alt="Guest QR code" class="qr-image" />
                 </div>
 
-                <button
-                  type="button"
-                  class="btn download"
-                  :style="{ marginBottom: '8px' }"
-                  @click="openDownloadPage"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    width="24"
-                    height="24"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    fill="none"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
+                <button type="button" class="btn download" :style="{ marginBottom: '8px' }" @click="openDownloadPage">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"
+                    stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                     <polyline points="7 10 12 15 17 10"></polyline>
                     <line x1="12" y1="15" x2="12" y2="3"></line>
@@ -321,9 +300,7 @@ onBeforeUnmount(stopAutoPlay)
                   Download QR
                 </button>
 
-                <a href="javascript:void(0);" @click="onRevoke" class="result-sub underlined"
-                  >Change my response</a
-                >
+                <a href="javascript:void(0);" @click="onRevoke" class="result-sub underlined">Change my response</a>
                 <p class="mt-1">
                   <small>↓ Scroll down to view more details</small>
                 </p>
@@ -334,9 +311,7 @@ onBeforeUnmount(stopAutoPlay)
                 <p class="result-sub" :style="{ paddingInline: '10px' }">
                   We appreciate your response. See you next time!
                 </p>
-                <a href="javascript:void(0);" @click="onRevoke" class="result-sub underlined"
-                  >Change my response</a
-                >
+                <a href="javascript:void(0);" @click="onRevoke" class="result-sub underlined">Change my response</a>
               </div>
             </template>
           </template>
@@ -350,19 +325,11 @@ onBeforeUnmount(stopAutoPlay)
             ×
           </button>
 
-          <div
-            class="slides-viewport"
-            @touchstart.passive="onTouchStart"
-            @touchend.passive="onTouchEnd"
-          >
+          <div class="slides-viewport" @touchstart.passive="onTouchStart" @touchend.passive="onTouchEnd">
             <div class="slides-track" :style="trackStyle">
               <figure v-for="(slide, index) in slides" :key="slide" class="slide">
-                <img
-                  :src="slide"
-                  :alt="`Prenup photo ${index + 1}`"
-                  class="slide-image"
-                  :loading="index === 0 ? 'eager' : 'lazy'"
-                />
+                <img :src="slide" :alt="`Prenup photo ${index + 1}`" class="slide-image"
+                  :loading="index === 0 ? 'eager' : 'lazy'" />
               </figure>
             </div>
           </div>
@@ -374,17 +341,9 @@ onBeforeUnmount(stopAutoPlay)
           </div>
 
           <div class="tablist" role="tablist" aria-label="Prenup slides">
-            <button
-              v-for="(slide, index) in slides"
-              :key="slide"
-              type="button"
-              class="tab"
-              :class="{ active: currentIndex === index }"
-              :aria-label="`Go to slide ${index + 1}`"
-              :aria-selected="currentIndex === index"
-              role="tab"
-              @click="onManualControl(() => goTo(index))"
-            >
+            <button v-for="(slide, index) in slides" :key="slide" type="button" class="tab"
+              :class="{ active: currentIndex === index }" :aria-label="`Go to slide ${index + 1}`"
+              :aria-selected="currentIndex === index" role="tab" @click="onManualControl(() => goTo(index))">
               <span class="tab-dot" />
             </button>
           </div>
@@ -410,6 +369,7 @@ onBeforeUnmount(stopAutoPlay)
 .detail-5 {
   padding: 0.5rem;
 }
+
 .intro-content {
   width: min(560px, 100%);
   margin: 0 auto;
@@ -451,6 +411,7 @@ hr {
   background: #5b2d8e;
   margin: 1rem 0;
 }
+
 .deck-card:nth-of-type(1) {
   transform: translateX(calc(-50% - 84px)) rotate(-18deg);
   z-index: 3;
@@ -989,6 +950,7 @@ hr {
   background: #4f2b82;
   color: #fff;
 }
+
 .underlined {
   text-decoration: underline;
   cursor: pointer;
