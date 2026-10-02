@@ -302,6 +302,7 @@ const updateGuest = async (id) => {
         guest.name = editingName.value.trim()
         guest.tableNo = editingTableNo.value.trim() || ''
       }
+      setLocalStorage()
       cancelEdit()
     } else {
       showToast('Failed to update guest.', 'error')
@@ -769,62 +770,24 @@ onBeforeUnmount(() => {
     </main>
 
     <!-- Floating Camera Scan Button (Buried at bottom-right, swipe up to float, swipe down to bury) -->
-    <button
-      type="button"
-      class="fab-camera-btn"
-      :class="{ 'is-buried': isFabBuried, 'is-dragging': isDraggingFab }"
-      :style="fabStyle"
-      @touchstart.passive="onFabTouchStart"
-      @touchmove.passive="onFabTouchMove"
-      @touchend="onFabTouchEnd"
-      @mousedown="onFabMouseDown"
-      aria-label="Scan Guest QR Code"
-      :title="isFabBuried ? 'Swipe up to float or tap to scan' : 'Swipe down to bury or tap to scan'"
-    >
+    <button type="button" class="fab-camera-btn" :class="{ 'is-buried': isFabBuried, 'is-dragging': isDraggingFab }"
+      :style="fabStyle" @touchstart.passive="onFabTouchStart" @touchmove.passive="onFabTouchMove"
+      @touchend="onFabTouchEnd" @mousedown="onFabMouseDown" aria-label="Scan Guest QR Code"
+      :title="isFabBuried ? 'Swipe up to float or tap to scan' : 'Swipe down to bury or tap to scan'">
       <!-- Swipe indicator hint -->
       <span class="fab-swipe-indicator" aria-hidden="true">
-        <svg
-          v-if="isFabBuried"
-          xmlns="http://www.w3.org/2000/svg"
-          width="13"
-          height="13"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="3"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
+        <svg v-if="isFabBuried" xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24"
+          fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="18 15 12 9 6 15"></polyline>
         </svg>
-        <svg
-          v-else
-          xmlns="http://www.w3.org/2000/svg"
-          width="13"
-          height="13"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="3"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
+        <svg v-else xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="6 9 12 15 18 9"></polyline>
         </svg>
       </span>
 
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        width="24"
-        height="24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        class="camera-svg-icon"
-      >
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="camera-svg-icon">
         <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
         <circle cx="12" cy="13" r="4"></circle>
       </svg>
@@ -1174,6 +1137,7 @@ onBeforeUnmount(() => {
 }
 
 @keyframes bounceSwipeUp {
+
   0%,
   100% {
     transform: translateX(-50%) translateY(0);
