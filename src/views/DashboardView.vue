@@ -233,6 +233,8 @@ const startEdit = (guest) => {
   editingId.value = guest.id
   editingName.value = guest.name
   editingTableNo.value = guest.tableNo
+  console.log(editingName.value)
+  console.log(editingTableNo.value)
 }
 
 const cancelEdit = () => {
@@ -290,7 +292,7 @@ const updateGuest = async (id) => {
       method: 'PATCH',
       body: JSON.stringify({
         name: editingName.value.trim(),
-        tableNo: editingTableNo.value.trim() || '',
+        tableNo: editingTableNo.value ? String(editingTableNo.value).trim() : '',
       }),
     })
     if (res.status === 401 || res.status === 403) {
@@ -300,14 +302,14 @@ const updateGuest = async (id) => {
       const guest = guests.value.find((g) => g.id === id)
       if (guest) {
         guest.name = editingName.value.trim()
-        guest.tableNo = editingTableNo.value.trim() || ''
+        guest.tableNo = editingTableNo.value ? String(editingTableNo.value).trim() : ''
       }
       setLocalStorage()
       cancelEdit()
     } else {
       showToast('Failed to update guest.', 'error')
     }
-  } catch {
+  } catch (err) {
     showToast('Failed to update guest.', 'error')
   }
 }
@@ -754,7 +756,7 @@ onBeforeUnmount(() => {
           </table>
           <div v-if="totalPages > 1" class="pagination">
             <span class="pagination-meta">{{ paginationStart }}–{{ paginationEnd }} of {{ filteredGuests.length
-            }}</span>
+              }}</span>
             <div class="page-controls">
               <button class="page-btn" @click="currentPage--" :disabled="currentPage === 1">
                 ‹
