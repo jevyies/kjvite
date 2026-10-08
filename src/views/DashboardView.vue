@@ -118,14 +118,107 @@ const fabStyle = computed(() => {
   return {}
 })
 
+const selectedTableTab = ref('all')
+
+const hasNoTable = (tableNo) => {
+  if (tableNo === null || tableNo === undefined || tableNo === false) return true
+  const str = String(tableNo).trim()
+  return str === '' || str === '0' || str.toUpperCase() === 'N/A' || str.toUpperCase() === 'NONE'
+}
+
+const formatTableLabel = (tableNo) => {
+  const str = String(tableNo || '').trim()
+  if (!str) return 'N/A'
+  if (/^\d+$/.test(str)) {
+    return `Table ${str}`
+  }
+  return str
+}
+
+const tableTabs = computed(() => {
+  const tablesMap = new Map()
+  let naCount = 0
+
+  const baseGuests =
+    selectedCard.value === 'all'
+      ? guests.value
+      : guests.value.filter((g) => g.status === selectedCard.value)
+
+  baseGuests.forEach((g) => {
+    if (hasNoTable(g.tableNo)) {
+      naCount++
+    } else {
+      const rawKey = String(g.tableNo).trim()
+      tablesMap.set(rawKey, (tablesMap.get(rawKey) || 0) + 1)
+    }
+  })
+
+  if (selectedCard.value !== 'all') {
+    guests.value.forEach((g) => {
+      if (!hasNoTable(g.tableNo)) {
+        const rawKey = String(g.tableNo).trim()
+        if (!tablesMap.has(rawKey)) {
+          tablesMap.set(rawKey, 0)
+        }
+      }
+    })
+  }
+
+  const sortedKeys = Array.from(tablesMap.keys()).sort((a, b) =>
+    a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }),
+  )
+
+  const tabs = [
+    {
+      key: 'all',
+      label: 'All',
+      count: baseGuests.length,
+    },
+  ]
+
+  sortedKeys.forEach((key) => {
+    tabs.push({
+      key,
+      label: formatTableLabel(key),
+      count: tablesMap.get(key) || 0,
+    })
+  })
+
+  const hasAnyGuestWithoutTable = guests.value.some((g) => hasNoTable(g.tableNo))
+  if (hasAnyGuestWithoutTable) {
+    tabs.push({
+      key: 'na',
+      label: 'N/A',
+      count: naCount,
+    })
+  }
+
+  return tabs
+})
+
+const selectedTableTabLabel = computed(() => {
+  if (selectedTableTab.value === 'all') return 'All'
+  if (selectedTableTab.value === 'na') return 'N/A'
+  return formatTableLabel(selectedTableTab.value)
+})
+
 const filteredGuests = computed(() => {
   let data = guests.value
   if (selectedCard.value !== 'all') {
     data = guests.value.filter((g) => g.status === selectedCard.value)
   }
+
+  if (selectedTableTab.value === 'na') {
+    data = data.filter((g) => hasNoTable(g.tableNo))
+  } else if (selectedTableTab.value !== 'all') {
+    data = data.filter(
+      (g) => !hasNoTable(g.tableNo) && String(g.tableNo).trim() === selectedTableTab.value,
+    )
+  }
+
   if (!searchQuery.value.trim()) return data
   const q = searchQuery.value.trim().toLowerCase()
-  return data.filter((g) => g.name.toLowerCase().includes(q))
+  return data.filter((g) => g.name && g.name.toLowerCase().includes(q))
 })
 
 const totalPages = computed(() => Math.max(1, Math.ceil(filteredGuests.value.length / PAGE_SIZE)))
@@ -140,8 +233,14 @@ const paginationEnd = computed(() =>
   Math.min(currentPage.value * PAGE_SIZE, filteredGuests.value.length),
 )
 
-watch(searchQuery, () => {
+watch([searchQuery, selectedTableTab, selectedCard], () => {
   currentPage.value = 1
+})
+
+watch(tableTabs, (newTabs) => {
+  if (selectedTableTab.value !== 'all' && !newTabs.some((t) => t.key === selectedTableTab.value)) {
+    selectedTableTab.value = 'all'
+  }
 })
 
 const acceptedCount = computed(() => guests.value.filter((g) => g.status === 'accepted').length)
@@ -232,9 +331,7 @@ const deleteGuest = async () => {
 const startEdit = (guest) => {
   editingId.value = guest.id
   editingName.value = guest.name
-  editingTableNo.value = guest.tableNo
-  console.log(editingName.value)
-  console.log(editingTableNo.value)
+  editingTableNo.value = hasNoTable(guest.tableNo) ? '' : guest.tableNo
 }
 
 const cancelEdit = () => {
@@ -309,7 +406,7 @@ const updateGuest = async (id) => {
     } else {
       showToast('Failed to update guest.', 'error')
     }
-  } catch (err) {
+  } catch {
     showToast('Failed to update guest.', 'error')
   }
 }
@@ -680,6 +777,28 @@ onBeforeUnmount(() => {
           <input v-model="searchQuery" type="search" class="search-input" placeholder="Search guests by name…" />
         </div>
 
+        <!-- Table filter tabs -->
+        <div v-if="!tableLoading && guests.length > 0" class="table-tabs-container">
+          <div class="table-tabs" role="tablist" aria-label="Filter guests by table">
+            <button
+              v-for="tab in tableTabs"
+              :key="tab.key"
+              type="button"
+              role="tab"
+              class="table-tab-btn"
+              :class="{
+                active: selectedTableTab === tab.key,
+                'tab-na': tab.key === 'na',
+              }"
+              :aria-selected="selectedTableTab === tab.key"
+              @click="selectedTableTab = tab.key"
+            >
+              <span class="tab-label">{{ tab.label }}</span>
+              <span class="tab-count">{{ tab.count }}</span>
+            </button>
+          </div>
+        </div>
+
         <div v-if="tableLoading" class="table-loading">
           <div class="loading-ring"></div>
         </div>
@@ -691,6 +810,7 @@ onBeforeUnmount(() => {
         <div v-else class="table-wrap">
           <div v-if="filteredGuests.length === 0" class="empty-state">
             <p v-if="searchQuery.trim()">No guests match “{{ searchQuery }}”.</p>
+            <p v-else-if="selectedTableTab !== 'all'">No guests assigned to {{ selectedTableTabLabel }}.</p>
             <p v-else>No guests available.</p>
           </div>
           <table v-else>
@@ -721,8 +841,9 @@ onBeforeUnmount(() => {
                 </td>
                 <td data-label="Table Name" class="text-center td-link">
                   <input v-if="editingId === guest.id" v-model="editingTableNo" class="edit-input"
+                    placeholder="Table name or no."
                     @keyup.enter="updateGuest(guest.id)" @keyup.escape="cancelEdit" @click.stop />
-                  <span v-else>{{ guest.tableNo }}</span>
+                  <span v-else :class="{ 'na-badge': hasNoTable(guest.tableNo) }">{{ hasNoTable(guest.tableNo) ? 'N/A' : guest.tableNo }}</span>
                 </td>
                 <td data-label="Status" :style="{ width: '120px' }">
                   <span class="badge" :class="`badge-${guest.status}`">{{ guest.status }}</span>
@@ -756,7 +877,7 @@ onBeforeUnmount(() => {
           </table>
           <div v-if="totalPages > 1" class="pagination">
             <span class="pagination-meta">{{ paginationStart }}–{{ paginationEnd }} of {{ filteredGuests.length
-              }}</span>
+            }}</span>
             <div class="page-controls">
               <button class="page-btn" @click="currentPage--" :disabled="currentPage === 1">
                 ‹
@@ -926,17 +1047,17 @@ onBeforeUnmount(() => {
                     <h3 class="popout-guest-title">{{ scannedResult.guest.name }}</h3>
 
                     <!-- Table Number Hero Popout -->
-                    <div class="popout-table-hero" :class="{ 'has-table': Boolean(scannedResult.guest.tableNo) }">
+                    <div class="popout-table-hero" :class="{ 'has-table': !hasNoTable(scannedResult.guest.tableNo) }">
                       <span class="table-badge-label">TABLE ASSIGNMENT</span>
                       <div class="table-number-box">
-                        <template v-if="scannedResult.guest.tableNo">
+                        <template v-if="!hasNoTable(scannedResult.guest.tableNo)">
                           <span class="table-number-val">{{ scannedResult.guest.tableNo }}</span>
                         </template>
                         <template v-else>
                           <span class="table-number-none">No Table Assigned</span>
                         </template>
                       </div>
-                      <p v-if="scannedResult.guest.tableNo" class="table-sub-note">
+                      <p v-if="!hasNoTable(scannedResult.guest.tableNo)" class="table-sub-note">
                         Please guide guest to <strong>Table {{ scannedResult.guest.tableNo }}</strong>
                       </p>
                       <p v-else class="table-sub-note">
@@ -2055,6 +2176,129 @@ onBeforeUnmount(() => {
 .search-input::-webkit-search-cancel-button {
   filter: invert(1) opacity(0.4);
   cursor: pointer;
+}
+
+/* ── Table Number Tabs ─────────────────────────────────── */
+.table-tabs-container {
+  margin-bottom: 1.25rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(111, 71, 198, 0.4) transparent;
+  padding-bottom: 0.25rem;
+}
+
+.table-tabs-container::-webkit-scrollbar {
+  height: 4px;
+}
+
+.table-tabs-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.table-tabs-container::-webkit-scrollbar-thumb {
+  background: rgba(111, 71, 198, 0.3);
+  border-radius: 4px;
+}
+
+.table-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: max-content;
+}
+
+.table-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.42rem 0.85rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.table-tab-btn:hover {
+  background: rgba(111, 71, 198, 0.18);
+  border-color: rgba(111, 71, 198, 0.4);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.table-tab-btn.active {
+  background: linear-gradient(135deg, #6f47c6 0%, #8560d8 100%);
+  border-color: #9d78ea;
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(111, 71, 198, 0.4);
+  font-weight: 600;
+}
+
+.table-tab-btn .tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+  transition: background 0.2s, color 0.2s;
+}
+
+.table-tab-btn.active .tab-count {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+/* N/A tab accent */
+.table-tab-btn.tab-na {
+  border-style: dashed;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.table-tab-btn.tab-na:hover {
+  border-color: rgba(248, 113, 113, 0.4);
+  background: rgba(248, 113, 113, 0.1);
+  color: #fca5a5;
+}
+
+.table-tab-btn.tab-na.active {
+  background: linear-gradient(135deg, rgba(183, 28, 28, 0.85) 0%, rgba(220, 38, 38, 0.85) 100%);
+  border-color: rgba(248, 113, 113, 0.6);
+  border-style: solid;
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.35);
+}
+
+.table-tab-btn.tab-na .tab-count {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.table-tab-btn.tab-na.active .tab-count {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* N/A badge in guest table */
+.na-badge {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.4);
+  border: 1px dashed rgba(255, 255, 255, 0.18);
 }
 
 /* ── Table ─────────────────────────────────────────────── */
