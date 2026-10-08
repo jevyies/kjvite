@@ -249,6 +249,69 @@ const declinedCount = computed(() => guests.value.filter((g) => g.status === 're
 
 const inviteLink = (token) => `${window.location.origin}/invite/${token}`
 
+const exportLoading = ref(false)
+
+const exportToExcel = async () => {
+  const targetGuests = filteredGuests.value.length > 0 ? filteredGuests.value : guests.value
+  if (!targetGuests || targetGuests.length === 0) {
+    showToast('No guests available to export.', 'warning')
+    return
+  }
+
+  exportLoading.value = true
+  try {
+    const XLSX = await import('xlsx')
+
+    const rows = targetGuests.map((guest, index) => {
+      let statusLabel = 'Pending'
+      if (guest.status === 'accepted') statusLabel = 'Accepted'
+      else if (guest.status === 'rejected') statusLabel = 'Declined'
+
+      const tableDisplay = hasNoTable(guest.tableNo) ? 'N/A' : guest.tableNo
+
+      return {
+        '#': index + 1,
+        'Guest Name': guest.name || '',
+        'Table': tableDisplay,
+      }
+    })
+
+    const worksheet = XLSX.utils.json_to_sheet(rows)
+
+    worksheet['!cols'] = [
+      { wch: 6 },
+      { wch: 28 },
+      { wch: 20 },
+      { wch: 15 },
+      { wch: 48 },
+      { wch: 14 },
+    ]
+
+    const workbook = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Guests')
+
+    const dateStr = new Date().toISOString().slice(0, 10)
+    let suffix = ''
+    if (selectedTableTab.value !== 'all') {
+      const tabStr = selectedTableTab.value === 'na' ? 'NA' : selectedTableTab.value.replace(/[^a-zA-Z0-9_-]/g, '_')
+      suffix += `_Table_${tabStr}`
+    }
+    if (selectedCard.value !== 'all') {
+      suffix += `_${selectedCard.value}`
+    }
+
+    const filename = `KJ_Wedding_Guests${suffix}_${dateStr}.xlsx`
+
+    XLSX.writeFile(workbook, filename)
+    showToast(`Exported ${rows.length} guest(s) to Excel.`, 'success')
+  } catch (error) {
+    console.error('Failed to export to Excel:', error)
+    showToast('Failed to export to Excel.', 'error')
+  } finally {
+    exportLoading.value = false
+  }
+}
+
 const fetchGuests = async () => {
   if (localStorage.getItem('guests')) {
     guests.value = JSON.parse(localStorage.getItem('guests') || [])
@@ -761,9 +824,26 @@ onBeforeUnmount(() => {
 
       <!-- Guest table -->
       <section class="panel">
-        <div class="d-flex justify-space-between align-center mb-1">
+        <div class="d-flex justify-space-between align-center mb-1 flex-wrap gap-2">
           <h2 class="section-title mb-0">Guests ({{ guests.length }})</h2>
-          <div class="d-flex gap-1">
+          <div class="d-flex gap-1 align-center">
+            <button class="btn-outlined btn-excel" @click="exportToExcel"
+              :disabled="exportLoading || guests.length === 0"
+              :title="filteredGuests.length < guests.length ? `Export ${filteredGuests.length} filtered guests to Excel` : `Export all ${guests.length} guests to Excel`">
+              <span v-if="exportLoading" class="btn-spinner"></span>
+              <template v-else>
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="excel-icon">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="8" y1="13" x2="16" y2="13"></line>
+                  <line x1="8" y1="17" x2="16" y2="17"></line>
+                  <polyline points="10 9 9 9 8 9"></polyline>
+                </svg>
+                <span>Export Excel</span>
+              </template>
+            </button>
             <!-- <button class="btn-outlined" @click="resetTableNo" :disabled="tableLoading">
               <span>↻ Reset Table Numbers</span>
             </button> -->
@@ -780,19 +860,10 @@ onBeforeUnmount(() => {
         <!-- Table filter tabs -->
         <div v-if="!tableLoading && guests.length > 0" class="table-tabs-container">
           <div class="table-tabs" role="tablist" aria-label="Filter guests by table">
-            <button
-              v-for="tab in tableTabs"
-              :key="tab.key"
-              type="button"
-              role="tab"
-              class="table-tab-btn"
-              :class="{
-                active: selectedTableTab === tab.key,
-                'tab-na': tab.key === 'na',
-              }"
-              :aria-selected="selectedTableTab === tab.key"
-              @click="selectedTableTab = tab.key"
-            >
+            <button v-for="tab in tableTabs" :key="tab.key" type="button" role="tab" class="table-tab-btn" :class="{
+              active: selectedTableTab === tab.key,
+              'tab-na': tab.key === 'na',
+            }" :aria-selected="selectedTableTab === tab.key" @click="selectedTableTab = tab.key">
               <span class="tab-label">{{ tab.label }}</span>
               <span class="tab-count">{{ tab.count }}</span>
             </button>
@@ -841,9 +912,10 @@ onBeforeUnmount(() => {
                 </td>
                 <td data-label="Table Name" class="text-center td-link">
                   <input v-if="editingId === guest.id" v-model="editingTableNo" class="edit-input"
-                    placeholder="Table name or no."
-                    @keyup.enter="updateGuest(guest.id)" @keyup.escape="cancelEdit" @click.stop />
-                  <span v-else :class="{ 'na-badge': hasNoTable(guest.tableNo) }">{{ hasNoTable(guest.tableNo) ? 'N/A' : guest.tableNo }}</span>
+                    placeholder="Table name or no." @keyup.enter="updateGuest(guest.id)" @keyup.escape="cancelEdit"
+                    @click.stop />
+                  <span v-else :class="{ 'na-badge': hasNoTable(guest.tableNo) }">{{ hasNoTable(guest.tableNo) ? 'N/A' :
+                    guest.tableNo }}</span>
                 </td>
                 <td data-label="Status" :style="{ width: '120px' }">
                   <span class="badge" :class="`badge-${guest.status}`">{{ guest.status }}</span>
@@ -2299,6 +2371,31 @@ onBeforeUnmount(() => {
   background: rgba(255, 255, 255, 0.05);
   color: rgba(255, 255, 255, 0.4);
   border: 1px dashed rgba(255, 255, 255, 0.18);
+}
+
+/* ── Excel Export Button ───────────────────────────────── */
+.btn-excel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: rgba(34, 197, 94, 0.12);
+  border-color: rgba(34, 197, 94, 0.35);
+  color: #4ade80;
+}
+
+.btn-excel:hover:not(:disabled) {
+  background: rgba(34, 197, 94, 0.22);
+  border-color: rgba(34, 197, 94, 0.55);
+  color: #86efac;
+}
+
+.btn-excel:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.excel-icon {
+  flex-shrink: 0;
 }
 
 /* ── Table ─────────────────────────────────────────────── */
