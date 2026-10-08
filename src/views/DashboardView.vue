@@ -282,9 +282,6 @@ const exportToExcel = async () => {
       { wch: 6 },
       { wch: 28 },
       { wch: 20 },
-      { wch: 15 },
-      { wch: 48 },
-      { wch: 14 },
     ]
 
     const workbook = XLSX.utils.book_new()
@@ -949,7 +946,7 @@ onBeforeUnmount(() => {
           </table>
           <div v-if="totalPages > 1" class="pagination">
             <span class="pagination-meta">{{ paginationStart }}–{{ paginationEnd }} of {{ filteredGuests.length
-            }}</span>
+              }}</span>
             <div class="page-controls">
               <button class="page-btn" @click="currentPage--" :disabled="currentPage === 1">
                 ‹
